@@ -1,11 +1,11 @@
 ## Welcome to my bog
 
 ## 1、登录（SSO）
-###1.1 Shiro
-###1.2 spring security
+### 1.1 Shiro
+### 1.2 spring security
 
 ## 2、前端框架
-###2.1 bootstrap
+### 2.1 bootstrap
 
 ## 3、模板引擎
 ### 3.1 Apache Tiles
