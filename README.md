@@ -1,6 +1,5 @@
 ## Welcome to my bog
 
-<<<<<<< HEAD
 ## 1、登录（SSO）
 ###1.1 Shiro
 ###1.2 spring security
