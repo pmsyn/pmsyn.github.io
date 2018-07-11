@@ -1,4 +1,4 @@
-##                                                               Welcome to my bog
+## Welcome to my bog
 
 ## 一、project manage tools
 
