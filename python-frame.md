@@ -13,7 +13,7 @@
 
 # 模板引擎
 
-  Jinja2：一个现代的，对设计师友好的模板引擎
+  Jinja2：一个现代的，对设计师友好的模板引擎 http://jinja.pocoo.org/
 
   Chameleon：一个 HTML/XML 模板引擎。 模仿了 ZPT（Zope Page Templates）, 进行了速度上的优化
 
