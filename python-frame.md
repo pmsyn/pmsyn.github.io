@@ -1,10 +1,10 @@
 # python web framework
 
-## 1、Django：Python 界最流行的 web 框架 https://www.djangoproject.com/
+1、Django：Python 界最流行的 web 框架 https://www.djangoproject.com/
 
-## 2、flask Python 微型框架 http://flask.pocoo.org/
+2、flask Python 微型框架 http://flask.pocoo.org/
 
-## 4、Bottle：一个快速小巧，轻量级的 WSGI 微型 web 框架 http://bottlepy.org/docs/dev/index.html
+4、Bottle：一个快速小巧，轻量级的 WSGI 微型 web 框架 http://bottlepy.org/docs/dev/index.html
 
 ## 4、web.py：Python 的 web 框架，既简单，又强大 http://webpy.org/
 
