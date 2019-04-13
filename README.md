@@ -6,6 +6,7 @@
 
 ## 2、前端框架
 ### 2.1 bootstrap
+### 2.2 dojo
 
 ## 3、模板引擎
 ### 3.1 Apache Tiles
@@ -42,6 +43,7 @@
 ## 12、代码管理工具
 ### 12.1 git
 ### 12.2 svn
+### 12.3 sonar
 
 ## 14、UI设计软件
 ### 14.1 Mockups
@@ -67,6 +69,8 @@
 
 ### Hbase
 
-## docker 
+## 微服务
+### docker 
+### SpringCloud
 
 ## python
