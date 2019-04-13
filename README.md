@@ -1,7 +1,7 @@
-## Welcome to my bog
+# Welcome to my bog
 
 ## Java
-###   JVM
+###   JVM 书籍:* www.baidu.com
 ###   程序性能优化
 ###   Tomcat
 ###   并发编程进阶
