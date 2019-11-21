@@ -1,3 +1,4 @@
+
 # 常见知识点
 
 ## 1. Volatile
@@ -45,4 +46,5 @@ JMM特性：
 ![image-20191120144133170](C:\Users\user\AppData\Roaming\Typora\typora-user-images\image-20191120144133170.png)
 
 ![image-20191120144138524](C:\Users\user\AppData\Roaming\Typora\typora-user-images\image-20191120144138524.png)
+
 
