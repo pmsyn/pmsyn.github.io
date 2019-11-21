@@ -48,3 +48,4 @@ JMM特性：
 ![](https://github.com/pengmengsheng/pengmengsheng.github.io/blob/master/interview/java-interview/img/3%20(2).png)
 
 
+写作规范参考：[《中文技术文档的写作规范》](https://github.com/ruanyf/document-style-guide "中文技术文档的写作规范")
