@@ -49,5 +49,36 @@ JMM特性：
 
 ![](https://github.com/pengmengsheng/pengmengsheng.github.io/blob/master/interview/java-interview/img/3%20(2).png)
 
+## 4.CAS(比较并交换)
+CAS的全称为Compare-And-Swap, **它是一条CPU并发原语**。
+它的功能是判断内存某个位置的值是否为预期值，如果是则更改为新的值，这个过程是原子的。
+
+CAS并发原语体现在JAVA语言中就是sun.misc.Unsafe类中的各个方法。调用UnSafe类中的CAS方法，JVM会帮我们实现出CAS汇编指令。这是一种完全依赖于硬件的功能，通过它实现了原子操作。再次强调，由于CAS是一种系统原语，原语属于操作系统用语范畴，是由若干条指令组成的，用于完成某个功能的一个过程，**并且原语的执行必须是连续的，在执行过程中不允许被中断，也就是说CAS是一条CPU的原子指令，不会造成所谓的数据不一-致问题。**
+
+4.1 自旋锁
+
+4.2 Unsafe
+
+1.Unsafe是CAS的核心类，由于Java方法无法直接访问底层系统，需要通过本地(native)方法来访问，Unsafe相当于一个后门，基于该
+类可以直接操作特定内存的数据。Unsafe类存在于sun.misc包中，其内部方法操作可以像C的指针- -样直接操作内存，因为Java中
+CAS操作的执行依赖于Unsafe类的方法。
+
+
+**注意**:Unsafe类中的所有方法都是native修饰的，也就是说Unsafe类中的方法都直接调用操作系统底层资源执行相应任务
+
+2.变量valueOffset，表示该变量值在内存中的偏移地址，因为Unsafe就是根据内存偏移地址获取数据的。
+
+	/**
+     * Atomically sets to the given value and returns the old value.
+     *
+     * @param newValue the new value
+     * @return the previous value
+     */
+    public final int getAndSet(int newValue) {
+        return unsafe.getAndSetInt(this, valueOffset, newValue);
+    }
+
+3.变量value用volatile修饰，保证了多线程之间的内存可见性。
+
 
 写作规范参考：[《中文技术文档的写作规范》](https://github.com/ruanyf/document-style-guide "中文技术文档的写作规范")
