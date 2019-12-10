@@ -55,7 +55,7 @@ CAS的全称为Compare-And-Swap, **它是一条CPU并发原语**。
 
 CAS并发原语体现在JAVA语言中就是sun.misc.Unsafe类中的各个方法。调用UnSafe类中的CAS方法，JVM会帮我们实现出CAS汇编指令。这是一种完全依赖于硬件的功能，通过它实现了原子操作。再次强调，由于CAS是一种系统原语，原语属于操作系统用语范畴，是由若干条指令组成的，用于完成某个功能的一个过程，**并且原语的执行必须是连续的，在执行过程中不允许被中断，也就是说CAS是一条CPU的原子指令，不会造成所谓的数据不一-致问题。**
 
-4.1 自旋锁
+## 4.1 自旋锁
 
 4.2 Unsafe
 
@@ -79,6 +79,55 @@ CAS操作的执行依赖于Unsafe类的方法。
     }
 
 3.变量value用volatile修饰，保证了多线程之间的内存可见性。
+
+CAS--->Unsafe--->CAS底层思想--->ABA--->原子引用更新--->如何避免ABA问题
+
+CAS算法实现一个重要前提需要取出内存中某时刻的数据并在当下时刻比较并替换，那么在这个时间差类会导致数据的变化。
+
+比如说一个线程onE从内存位置V中取出A，这时候另一个线程two也从内存中取出A，并且线程two进行了一些操作将值变成了B,然后线程two又将V位置的数据变成A，这时候线程one进行CAS操作发现内存中仍然是A,然后线程one操作成功。
+尽管线程one的CAS操作成功，但是不代表这个过程就是没有问题的。
+
+如何解决ABA
+理解原子引用+新增一种机制，修改版本号（类似时间戳）
+AtomicStampedRefrence 带时间戳原子引用
+
+# 5.集合类不安全解决
+## 5.1 List
+1.Vector
+
+2.Collections.synchronizedList
+
+3.CopyOnWriteArrayList
+
+## 5.2 Set
+
+1.Collections.synchronizedSet
+
+2.CopyOnWriteArraySet
+## 6.闭锁CountDownLatch
+CountDownLatch有一个正数计数器，countDown方法对计数器做减操作，await方法等待计数器达到0。所有await的线程都会阻塞直到计数器为0或者等待线程中断或者超时。
+
+## 7.Callable接口
+带返回值的操作
+    
+	FutureTask result = new FutureTask<>(CallalbelImpl);//CallalbelImpl实现类
+	new Thread(result).start();
+	result.get();//获取返回值
+
+FutureTask也可用于闭锁的操作。
+## 8.Lock显示锁
+通过lock()方法上锁，unlock()释放锁。
+
+    Lock lock = new ReentrantLock();
+	lock.lock();
+	lock.unlock();
+
+
+
+
+
+
+
 
 
 写作规范参考：[《中文技术文档的写作规范》](https://github.com/ruanyf/document-style-guide "中文技术文档的写作规范")
