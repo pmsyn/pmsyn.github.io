@@ -91,21 +91,151 @@ CAS算法实现一个重要前提需要取出内存中某时刻的数据并在�
 理解原子引用+新增一种机制，修改版本号（类似时间戳）
 AtomicStampedRefrence 带时间戳原子引用
 
-# 5.集合类不安全解决
-## 5.1 List
+## 5.集合类不安全解决
+### 5.1 List
 1.Vector
 
 2.Collections.synchronizedList
 
 3.CopyOnWriteArrayList
 
-## 5.2 Set
+### 5.2 Set
 
 1.Collections.synchronizedSet
 
 2.CopyOnWriteArraySet
-## 6.闭锁CountDownLatch
-CountDownLatch有一个正数计数器，countDown方法对计数器做减操作，await方法等待计数器达到0。所有await的线程都会阻塞直到计数器为0或者等待线程中断或者超时。
+
+### 5.3 Map
+1.Collections.synchronizedMap
+
+2.ConcurrentHashMap
+
+## 6.锁
+### 6.1公平锁/非公平锁
+ReentrantLock **默认：NonfairSync（非公平锁）**，传入true,ReentrantLock(true)公平锁。
+
+关于两者区别:
+
+**公平锁:** Threads acquire a fair lock in the order in which they requested it
+
+公平锁，就是很公平，在并发环境中，每个线程在获取锁时会先查看此锁维护的等待队列，如果为空，或者当前线程是等待队列的第一个，就占有锁，否则就会加入到等待队列中，以后会按照 FIFO 的规则从队列中取到自己
+
+**非公平锁:** a nonfair lock permits barging: threads requesting a lock can jump ahead of the queue of waiting threads if the lockhappens to be available when it is requested.
+
+非公平锁比较粗鲁，上来就直接尝试占有锁，如果尝试失败，就再采用类似公平锁那种方式。
+
+### 6.2可重入锁（递归锁）——synchronized、ReentrantLock
+线程可以进入任何一个他已经拥有的锁所同步着的代码块。
+
+	public synchronized void a () {
+		b();
+	}
+	public synchronized void b () {
+		
+	}
+
+### 6.3自旋锁（spinlock）
+- 尝试获取锁的线程**不会立即阻塞**，而是**采用循环的方式去尝试获取锁**,这样的好处是减少线程上下文切换的消耗，缺点是循环会消耗CPU。
+
+		AtomicReferencec Thread> atomicReference=new AtomicReference<>();
+		public void myLock(){
+		Thread thread =Thread.currentThread();
+		while(!atomicReference.compareAndset(nu11, thread)){
+
+			}
+		}
+
+### 6.4独占锁（写锁）/共享锁（读锁）/互斥锁
+- 独占锁：该锁只能被一个线程所持有。ReentrantLock 和Synchronized都是独占锁
+- 共享锁：该锁可以被多个线程所持有 
+ReentrantReadWriteLock 其读锁是共享锁，其写锁是独占锁。
+读锁的共享锁可保证并发读是非常高效的，读写、写读、写写过程是互斥的。
+	
+		ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+		//读锁
+		lock.readLock().lock();
+		//写锁
+		lock.writeLock().lock();
+
+### 6.5.Lock显示锁
+- 通过lock()方法上锁，unlock()释放锁。
+
+	    Lock lock = new ReentrantLock();
+		lock.lock();
+		lock.unlock();
+
+### 7. 闭锁CountDownLatch
+- CountDownLatch一个正数计数器，countDown方法对计数器做减操作，await方法等待计数器达到0。所有await的线程都会阻塞直到计数器为0或者等待线程中断或者超时。
+	
+		try {
+			CountDownLatch latch = new CountDownLatch(5);
+			//执行线程操作
+			for(int i =0;i<6;i++) {
+				new Thread(() ->{
+					latch.countDown();
+				},"线程"+i).start();				
+			}
+
+			//等待线程执行完成
+			latch.await();
+			System.out.println("完成");
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+
+## 8.CyclicBarrier
+栅栏类似于闭锁，它能阻塞一组线程直到某个事件的发生。栅栏与闭锁的关键区别在于，所有的线程必须同时到达栅栏位置，才能继续执行。闭锁用于等待事件，而栅栏用于等待其他线程
+
+	CyclicBarrier cyclicBarrier = new CyclicBarrier(8, () -> {
+			System.out.println("线程执行结束");
+		});
+		
+		for(int i=0;i<8;i++) {
+			new Thread(() ->{
+				System.out.println(Thread.currentThread().getName());
+				try {
+					//线程阻塞，直到所有线程执行完成
+					cyclicBarrier.await();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (BrokenBarrierException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}, "第"+i+"个线程");
+		}
+
+**CountDownLatch**和**CyclicBarrier**的比较
+
+1. CountDownLatch是线程组之间的等待，即一个(或多个)线程等待N个线程完成某件事情之后再执行；而CyclicBarrier则是线程组内的等待，即每个线程相互等待，即N个线程都被拦截之后，然后依次执行。
+2. CountDownLatch是减计数方式，而CyclicBarrier是加计数方式。
+3. CountDownLatch计数为0无法重置，而CyclicBarrier计数达到初始值，则可以重置。
+4. CountDownLatch不可以复用，而CyclicBarrier可以复用。
+
+## 9.Semaphore 信号灯/信号量
+- 主要目的：一个是用于**多个共享资源的互斥使用**，另一个用于**并发线程数的控制**。
+
+		//模拟6个线程使用3个资源
+		Semaphore semaphore = new Semaphore(3);
+		for(int i=1;i<=6;i++) {
+			new Thread(() ->{
+				try {
+					semaphore.acquire();
+					System.out.println(Thread.currentThread().getName()+"获得资源");
+					TimeUnit.SECONDS.sleep(3);
+					System.out.println(Thread.currentThread().getName()+"释放资源");
+					
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}finally {
+					semaphore.release();
+				}
+				
+			} , "线程"+i).start();
+		}
+
 
 ## 7.Callable接口
 带返回值的操作
@@ -115,12 +245,6 @@ CountDownLatch有一个正数计数器，countDown方法对计数器做减操作
 	result.get();//获取返回值
 
 FutureTask也可用于闭锁的操作。
-## 8.Lock显示锁
-通过lock()方法上锁，unlock()释放锁。
-
-    Lock lock = new ReentrantLock();
-	lock.lock();
-	lock.unlock();
 
 
 
