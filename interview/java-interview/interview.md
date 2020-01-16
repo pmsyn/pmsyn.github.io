@@ -5,14 +5,15 @@
 
 Java虚拟机提供的轻量级同步机制（synchronize）  
 特性：  
+
 * 1.1、保证可见性
 * 1.2、不保证原子性
 * 1.3、禁止指令重排（有序性）
 
 ## 2. JMM内存模型  
-JMM(Java内存模型Java Memory Model，简称JMM)本身是一种抽象的概念**并不真实存在**，它描述的是一组规则或规范，通过这组规范定义了程序中各个变量(包括实例字段，静态字段和构成数组对象的元素)的访问方式。
-
+JMM(Java内存模型Java Memory Model，简称JMM)本身是一种抽象的概念**并不真实存在**，它描述的是一组规则或规范，通过这组规范定义了程序中各个变量(包括实例字段，静态字段和构成数组对象的元素)的访问方式。  
 JMM关于同步的规定：  
+
 * 1、线程解锁前，必须把共享变量的值刷新回主内存
 * 2、线程加锁前，必须读取主内存的最新值到自己的工作内存
 * 3、加锁解锁是同一把锁
@@ -48,7 +49,7 @@ CAS并发原语体现在JAVA语言中就是sun.misc.Unsafe类中的各个方法�
 
 ## 4.1 自旋锁
 
-4.2 Unsafe
+Unsafe
 
 * 1.Unsafe是CAS的核心类，由于Java方法无法直接访问底层系统，需要通过本地(native)方法来访问，Unsafe相当于一个后门，基于该
 类可以直接操作特定内存的数据。Unsafe类存在于sun.misc包中，其内部方法操作可以像C的指针一样直接操作内存，因为Java中CAS操作的执行依赖于Unsafe类的方法。  
@@ -95,6 +96,7 @@ AtomicStampedRefrence 带时间戳原子引用
 ReentrantLock **默认：NonfairSync（非公平锁）**，传入true，ReentrantLock(true)公平锁。
 
 关于两者区别：  
+
 * **公平锁：** Threads acquire a fair lock in the order in which they requested it  
 公平锁，就是很公平，在并发环境中，每个线程在获取锁时会先查看此锁维护的等待队列，如果为空，或者当前线程是等待队列的第一个，就占有锁，否则就会加入到等待队列中，以后会按照 FIFO 的规则从队列中取到自己  
 * **非公平锁：** a nonfair lock permits barging： threads requesting a lock can jump ahead of the queue of waiting threads if the lockhappens to be available when it is requested.  
@@ -173,11 +175,7 @@ ReentrantReadWriteLock 其读锁是共享锁，其写锁是独占锁。
 				try {
 					//线程阻塞，直到所有线程执行完成
 					cyclicBarrier.await();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (BrokenBarrierException e) {
-					// TODO Auto-generated catch block
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}， "第"+i+"个线程");
@@ -212,13 +210,13 @@ ReentrantReadWriteLock 其读锁是共享锁，其写锁是独占锁。
 					semaphore.release();
 				}
 				
-			} ， "线程"+i).start();
+			} , "线程"+i).start();
 		}
 
 ## 10.队列
 
 * **ArrayBlockingQueue** ：由数组结构组成的有界阻塞队列。  
-* **LinkedBlockingQueue**：由链表结构组成的有界(但大小默认值为Integer.MAX_VALUE)。  
+* **LinkedBlockingQueue**：由链表结构组成的有界队列(但大小默认值为Integer.MAX_VALUE)。  
 * PriorityBlockingQueue：支持优先级排序的无界阻塞队列。  
 * DelayQueue：使用优先级队列实现的延迟无界阻塞队列。  
 * **SynchronousQueue**：不存储元素的阻塞队列，也即单个元素的队列  
@@ -228,29 +226,24 @@ ReentrantReadWriteLock 其读锁是共享锁，其写锁是独占锁。
 多线程判断使用while循环防止虚假唤醒
 
 ## 11.Synchornized和Lock区别联系
-* 1.原始构成
-
+* 1.原始构成  
 synchronized是关键字属于JVM层面，monitorenter(底层是通过tmoni tor对象来完成，其实wait/notify 等方法也依赖monitor对象只有在同步块或方法中才能调wait/notify等方法monitorexit   
-Lock是具体类(java. util. concurrent. Locks. Lock)是api层面的锁
+Lock是具体类(java.util.concurrent.Locks.Lock)是api层面的锁
 
-* 2.使用方法
-
+* 2.使用方法  
 synchronized不需要用户去手动释放锁，当synchronized代码执 行完后系统会自动让线程释放对锁的占用；  
 ReentrantLock则需要用户去手动释放锁若没有主动释放锁，就有可能导致出现死锁现象。
 
-* 3.等待是否可中断
-
+* 3.等待是否可中断  
 synchronized不可中断，除非抛出异常或者正常运行完成，ReentrantLock可中断，  
 1.设置超时方法tryLock(Long timeout， TimeUnit unit)  
 2.lockInterruptibly()放代码块中，调用interrupt() 方法可中断
 
-* 4.加锁是否公平
-
+* 4.加锁是否公平  
 synchronized非公平锁
 Reentrantlock两者都可以，默认非公平锁，构造方法可以传入boolean值， true 为公平锁，false为非公平锁
 
-* 5.锁绑定多个条件Condition
- 
+* 5.锁绑定多个条件Condition  
 synchronized没有
 Reentrantlock用来实现分组唤醒得要唤醒的线程们，可以精确唤醒， 而不是像synchronized 要么随机唤醒一个线程，要么唤醒全部线程。
  
@@ -263,8 +256,7 @@ Reentrantlock用来实现分组唤醒得要唤醒的线程们，可以精确唤�
 
 FutureTask也可用于闭锁的操作。
 
-## 13.线程池
-
+## 13.线程池 
 线程池做的工作主要是控制运行的线程的数量，处理过程中将任务放入队列，然后在线程创建后启动这些任务，如果线程数量超过了最大数量超出数量的线程排队等候，等其它线程执行完毕，再从队列中取出任务来执行。
 
 ### 13.1 线程池特点：
@@ -348,12 +340,12 @@ FutureTask也可用于闭锁的操作。
 **拒绝策略**：当任务数大于最大线程数(maximumPoolSize)+任务队列数(workQueue)时采取的策略
 
 	ExecutorService threadPoolExecutor = new ThreadPoolExecutor(
-			2，//corePoolSize
-			5，//maximumPoolSize
-			1，//keepAliveTime
-			TimeUnit.SECONDS，//unit
-			new LinkedBlockingQueue(3)，//workQueue
-			Executors.defaultThreadFactory()，//threadFactory
+			2,//corePoolSize
+			5,//maximumPoolSize
+			1,//keepAliveTime
+			TimeUnit.SECONDS,//unit
+			new LinkedBlockingQueue(3),//workQueue
+			Executors.defaultThreadFactory(),//threadFactory
 			new ThreadPoolExecutor.AbortPolicy());//handler
         try {
             for(int i = 1;i<=9;i++){
@@ -398,9 +390,7 @@ IO 密集型时，大部分线程都阻塞，故需要多配置线程数：
 
 ## 14.死锁
 ### 14.1原因
-死锁是指两个或两个以上的进程在执行过程中,因争夺资源而造成的一种互相等待的现象,若无外力干涉那它们都将无法推进下去，如果系统资源充足，进程的资源请求都能够得到满足，死锁出现的可能性就很低，否则就会因争夺有限的资源而陷入死锁。
-
-
+死锁是指两个或两个以上的进程在执行过程中,因争夺资源而造成的一种互相等待的现象,若无外力干涉那它们都将无法推进下去，如果系统资源充足，进程的资源请求都能够得到满足，死锁出现的可能性就很低，否则就会因争夺有限的资源而陷入死锁。  
 ### 14.2 代码：
 
 	class DeadLockDemo implements  Runnable{
@@ -581,20 +571,85 @@ Object obj = new Object();
 
 ### 18.2软引用SoftReference
 **内存足够的时候不回收，内存不够的时候进行回收**  
-软引用是一种相对强引用弱化了一些的引用，需要用java.lang.ref.SoftReference类来实现，可以让对象豁免一些垃圾收集。  
+软引用是一种相对强引用弱化了一些的引用，需要用 java.lang.ref.SoftReference类来实现，可以让对象豁免一些垃圾收集。  
 软引用通常用在对内存敏感的程序中，比如高速缓存就有用到软引用，内存够用的时候就保留，不够用就回收!
 
 ### 18.3 弱引用WeakReference
-只要GC就进行回收，用java.lang.ref.WeakReference类来实现
+只要GC就进行回收，用 java.lang.ref.WeakReference类来实现
+
+    Object obj = new Object();
+    WeakReference<Object> weakReference = new WeakReference(obj);
+    System.out.println(obj);//java.lang.Object@4554617c
+    System.out.println(weakReference.get());//java.lang.Object@4554617c
+    System.out.println("----------");
+    obj=null;
+    System.gc();
+    System.out.println(obj);//null
+    System.out.println(weakReference.get());//null
+
+### 18.4 虚引用PhantomReference
+虛引用需要 java.lang.ref.PhantomReference 类来实现。  
+
+顾名思义，就是形同虚设，与其他几种引用都不同，虚引用并不会决定对象的生命周期。  
+如果一个对象仅持有虚引用，那么它就和没有任何引用一样，在任何时候都可能被垃圾回收器回收，它不能单独使用也不能通过它访问对象，虚引用必须和引用队列(ReferenceQueue)联合使用。
+虚引用的主要作用是跟踪对象被垃圾回收的状态。仅仅是提供了一种确保对象被 finalize 以后，做某些事情的机制。  
+PhantomReference 的get方法总是返回null,因此无法访问对应的引用对象。其意义在于说明-一个对 象已经进入 finalization 阶段，可以被gc回收， 用来实现比 fialization 机制更灵活的回收操作。
+换句话说，设置虛引用关联的唯一-目的，就是在这个对象被收集器回收的时候收到一个系统通知或者后续添加进-一步的处理。  
+Java技术允许使用finalize()方法在垃圾收集器将对象从内存中清除出去之前做必要的清理工作。
+
+**GC 回收之前放到 ReferenceQueue 引用队列中**-虚引用通知机制
 
 
+	Object obj = new Object();
+    ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
+    PhantomReference phantomReference = new PhantomReference(obj,referenceQueue);
+    System.out.println("---GC前----");  
+    System.out.println(obj);//java.lang.Object@4554617c
+    System.out.println(phantomReference.get());//null
+    System.out.println(referenceQueue.poll());//null
 
+    System.out.println("---GC后----");
+    obj = null;
+    System.gc();
+    System.out.println(obj);//null
+    System.out.println(phantomReference.get());//null
+    System.out.println(referenceQueue.poll());//java.lang.ref.PhantomReference@74a14482  
 
+## 19 OOM
 
+**java.lang.StackOverflowError **管运行   
+**java.lang.OutOfMemoryError**: Java heap space 管存储  
+**java.lang.OutOfMemoryError**: GC overhead limit exceeded  
+-xx : MaxDirectMemorysize= 5m  
+ 
+* GC回收时间过长时会抛出OutOfMemroyError，**超过98%的时间用来做GC并且回收了不到2%的堆内存**
+* 连续多次GC都只回收了不到2%的极端情况下才会抛出。假如不抛出GC overhead limit 错误会发生什么停况呢?
+* 那就是GC清理的这么点内存很快会再次填满，迫使GC再次执行.这样就形成恶性循环,
+* CPU使用率-直是100%， 而GC 却没有任何成果
 
+**java.lang.OutOfMemoryError**: Direct buffer memory    
 
+* 导致原因:
+ 写NIO程序经常使ByteBuffer来读取或者写入数据， 这是一 一种基于通道(Channel)|与缓冲区(Buffer)的I/0方式,
+它可以使用Native函数库直接分配堆外内存，然后通过一个 存储在Java雄里面的DirectByteBuffer对象作为这块内存的引用进行操作。
+这样能在-些场景中显蓍提高性能，因为避免了在Java堆和Native堆中来回复制数据。  
+ByteBuffer.allocate(capability)第-种方式是分配JVM堆内存，属于GC 管辖范围，由于需要拷贝所以速度相对较慢  
+ByteBuffer.allocteDirect(capability)第一种方式是分配OS 本地内存，不属FGC管辖范围，由于不需要内存拷贝所以速度相对较快。  
+* 但如果不断分配本地内存， 堆内存很少使用，那么JVM就不需要执行GC, DirectByteBuffer对象 们就不会被回收,这时候堆内存充足，但本地内存可能已经使用光了，再次尝试分配本地内存就会出现OutOfMemoryError,那程序就直接崩溃了。
 
+-Xms5m -Xmx5m -XX:+PrintGCDetails -XX:MaxDirectMemorySize=5m  
 
+	System.out.println("初始JVM最大内存："+VM.maxDirectMemory());
+	ByteBuffer byteBuffer = ByteBuffer.allocateDirect(10*1024*1024);
+结果：  
+[GC (Allocation Failure) [PSYoungGen: 1024K->488K(1536K)] 1024K->592K(5632K), 0.0007910 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]  
+初始JVM最大内存：5242880  
+[GC (System.gc()) [PSYoungGen: 1313K->488K(1536K)] 1417K->688K(5632K), 0.0008659 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]  
+[Full GC (System.gc()) [PSYoungGen: 488K->0K(1536K)] [ParOldGen: 200K->635K(4096K)] 688K->635K(5632K), [**Metaspace: 3424K->3424K**(1056768K)], 0.0056662 secs] [Times: user=0.00 sys=0.00, real=0.01 secs]  
+Exception in thread "main" java.lang.OutOfMemoryError: Direct buffer memory
+
+**java.lang.OutOfMemoryError**: unable to create new native thread  
+**java.lang.OutOfMemoryError**: Metaspace  
 
 
 
