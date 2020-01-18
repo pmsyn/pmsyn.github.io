@@ -130,37 +130,42 @@ ReentrantLock **默认：NonfairSync（非公平锁）**，传入true，Reentran
 ReentrantReadWriteLock 其读锁是共享锁，其写锁是独占锁。
 读锁的共享锁可保证并发读是非常高效的，读写、写读、写写过程是互斥的。
 	
-		ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-		//读锁
-		lock.readLock().lock();
-		//写锁
-		lock.writeLock().lock();
+	```java
+	ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+	//读锁
+	lock.readLock().lock();
+	//写锁
+	lock.writeLock().lock();
+	```
 
 ### 6.5.Lock显示锁
 - 通过lock()方法上锁，unlock()释放锁。
 
-	    Lock lock = new ReentrantLock();
-	    lock.lock();
-	    lock.unlock();
+	```JAVA
+	Lock lock = new ReentrantLock();
+	lock.lock();
+	lock.unlock();
+	```
 
 ### 7. 闭锁CountDownLatch
 - CountDownLatch一个正数计数器，countDown方法对计数器做减操作，await方法等待计数器达到0。所有await的线程都会阻塞直到计数器为0或者等待线程中断或者超时。
 	
-		try {
-			CountDownLatch latch = new CountDownLatch(5);
-			//执行线程操作
-			for(int i =0;i<6;i++) {
-				new Thread(() ->{
-					latch.countDown();
-				}，"线程"+i).start();				
-			}
-
-			//等待线程执行完成
-			latch.await();
-			System.out.println("完成");
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		``` java
+	CountDownLatch latch = new CountDownLatch(5);
+	try {
+	    //执行线程操作
+	    for(int i =0;i<6;i++) {
+	        new Thread(() ->{
+	            latch.countDown();
+           }，"线程"+i).start();				
+       }
+	    //等待线程执行完成
+	    latch.await();
+	    System.out.println("完成");
+	} catch (InterruptedException e) {
+	    e.printStackTrace();
+	}
+	```
 
 
 ## 8.CyclicBarrier
@@ -168,20 +173,20 @@ ReentrantReadWriteLock 其读锁是共享锁，其写锁是独占锁。
 
 ```java
 CyclicBarrier cyclicBarrier = new CyclicBarrier(8， () -> {
-		System.out.println("线程执行结束");
-	});
-	
-	for(int i=0;i<8;i++) {
-		new Thread(() ->{
-			System.out.println(Thread.currentThread().getName());
-			try {
-				//线程阻塞，直到所有线程执行完成
-				cyclicBarrier.await();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}， "第"+i+"个线程");
-	}
+    System.out.println("线程执行结束");
+});
+
+for(int i=0;i<8;i++) {
+    new Thread(() ->{
+        System.out.println(Thread.currentThread().getName());
+        try {
+            //线程阻塞，直到所有线程执行完成
+            cyclicBarrier.await();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }， "第"+i+"个线程");
+}
 ```
 
 **CountDownLatch**和**CyclicBarrier**的比较
@@ -198,25 +203,25 @@ CyclicBarrier cyclicBarrier = new CyclicBarrier(8， () -> {
 
 - 2、用于**并发线程数的控制**。
 
-		``` java
-		//模拟6个线程使用3个资源
-		Semaphore semaphore = new Semaphore(3);
-		for(int i=1;i<=6;i++) {
-			new Thread(() ->{
-				try {
-					semaphore.acquire();//获取资源
-					System.out.println(Thread.currentThread().getName()+"获得资源");
-					TimeUnit.SECONDS.sleep(3);
-					System.out.println(Thread.currentThread().getName()+"释放资源");
-		} catch (InterruptedException e) {
-					e.printStackTrace();
-	     }finally {
-	      	semaphore.release();
-	     }
-				
-			} , "线程"+i).start();
-		}
-	```
+``` java
+//模拟6个线程使用3个资源
+Semaphore semaphore = new Semaphore(3);
+for(int i=1;i<=6;i++) {
+    new Thread(() ->{
+        try {
+            semaphore.acquire();//获取资源
+            System.out.println(Thread.currentThread().getName()+"获得资源");
+            TimeUnit.SECONDS.sleep(3);
+            System.out.println(Thread.currentThread().getName()+"释放资源");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }finally {
+            semaphore.release();
+        }
+
+    } , "线程"+i).start();
+}
+```
 
 ## 10.队列
 
@@ -299,7 +304,7 @@ try {
 
 
 ```java
- 	public ThreadPoolExecutor(int corePoolSize，//核心线程数
+public ThreadPoolExecutor(int corePoolSize，//核心线程数
                           int maximumPoolSize，//最大线程数
                           long keepAliveTime，//空闲线程存活时间
                           TimeUnit unit，//存活时间单位
@@ -360,14 +365,14 @@ ExecutorService threadPoolExecutor = new ThreadPoolExecutor(
 		new LinkedBlockingQueue(3),//workQueue
 		Executors.defaultThreadFactory(),//threadFactory
 		new ThreadPoolExecutor.AbortPolicy());//handler
-    try {
-        for(int i = 1;i<=9;i++){
-            threadPoolExecutor.execute(() -> {
-                System.out.println(Thread.currentThread().getName());
-            });
-        }
-	} catch (Exception e) {
-        threadPoolExecutor.shutdown();
+try {
+    for(int i = 1;i<=9;i++){
+        threadPoolExecutor.execute(() -> {
+            System.out.println(Thread.currentThread().getName());
+        });
+    }
+} catch (Exception e) {
+    threadPoolExecutor.shutdown();
 }
 ```
 
@@ -416,7 +421,7 @@ class DeadLockDemo implements  Runnable{
         this.lockA = lockA;
         this.lockB = lockB;
     }
-    
+
     @Override
     public void run() {
         synchronized (lockA){
