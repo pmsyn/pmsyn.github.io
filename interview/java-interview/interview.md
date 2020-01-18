@@ -715,6 +715,88 @@ Metaspace是方法在HotSpot中的实现，它与持久代最大的区别在于:
 静态变量
 即时编译后的代码
 
+## 20.垃圾收集器
+
+GC算法（引用计数/复制/标记清除/标记整理）是内存回收的方法论，垃圾收集器是算法的具体实现。
+
+查看默认收集器参数：-XX:+CommandLineFlags
+
+### 20.1 Serial(串行垃圾回收器)
+
+为**单线程环境**设计且只使用一个线 程进行垃圾回收，会暂停所有的用户线程， 所以不适合服务器环境。
+
+JVM参数：-XX:+UseSerialGC
+
+开启后默认使用：Serial（Young区） + Serial Old（Old区）
+新生代使用复制算法，老年代使用标记-整理算法
+
+串行收集器是最古老，最稳定以及效率高的收集器，只使用一个线程去回收但其在进行垃圾收集过程中可能会产生较长的停顿("Stop-The-World"状态)。虽然在收集垃圾过程中需要暂停所有其他的工作线程，但是它简单高效，对于限定单个CPU环境来说，没有线程交互的开销可以获得最高的单线程垃圾收集效率，因此Serial垃圾收集器依然是java虚拟机运行在Client模式下默认的新生代垃圾收集器。
+
+### 20.2 ParNew（并行收集器）
+
+使用多线程进行垃圾回收，在垃圾收集时，会Stop-the-World暂停其他所有的工作线程直到它收集结束。
+
+**ParNew收集器其实就是Serial收集器新生代的并行多线程版本**，最常见的应用场景是**配合老年代的CMSGC**工作，其余的行为和Serial收集器完全一样， ParNew垃圾收 器在垃圾收集过程中同样也要暂停所有其他的工作线程。**它是很多java虚拟机运行在Server模式下新生代的默认垃圾收集器**。
+
+常用对应JVM参数: -XX:+UseParNewGC 启用ParNew收集器， 只影响新生代的收集，不影响老年代。
+开启上述参数后，会使用: ParNew(Young区用) + Serial Old的收集器组合，**该组合不推荐使用，新生代使用复制算法，老年代采用标记-整理算法**
+
+-XX：ParallelGCThreads 限制线程数量，默认开启和CPU数目相同的线程数
+
+### 20.3 Parallel/Parallel Scavenge(并行垃圾回收器)
+
+**多个垃圾收集线程并行工作，此时用户线程是暂停的**，适用于科学计算/大数据处理首台处理等弱交互场景
+
+Parallel Scavenge收集器类似ParNew也是一个新生代垃圾收集器，使用复制算法，也是一个并行的多线程的垃圾收集器，价称吞吐量优先收集器。**串行收集器在新生代和老年代的并行化**。
+
+它重点关注的是:
+可控制的吞吐量(**Thoughput=运行用户代码时间/(运行用户代码时间+垃圾收集时间),也即比如程序运行100分钟，垃圾收集时间1分钟，吞吐量就是99%**)。高吞吐量意味若高效利用CPU的时间，它多用于在后台运算而不需要太多交互的任务。
+**自适应调节策略也是ParallelScavenge收集器与ParNew收集器的一个重要区别**。**自适应调节策略**:虚拟机会根据当前系统的运行情况收集性能监控信息，动态调整这些参数以提供最合适的停顿时间(-XX:MaxGCPauseMilis)或最大的吞吐量。
+
+**JVM参数**: -XX:+UseParallelGC或-XX:+UseParallelOldGC(可互相激活)使用Parallel Scanvenge收集器
+
+### 20.4 CMS(并发垃圾回收器)
+
+**用户线程和垃圾收集线程同时执行**(不一定是并行， 可能**交替执行)**，不需要停顿用户线程互联网公司多用它，适用对响应时间有要求的场景。
+
+-XX:+UseConcMarkSweepGC
+
+
+
+###  20.5 Serial Old(MSC)
+
+
+
+### 20.6 ParallelOldGC
+
+-XX:+UseParallelOldGC 
+
+### 20.4 G1垃圾回收器
+
+G1垃圾回收器**将堆内存分割成不同的区域然后并发的对其进行垃圾回收**
+
+-XX:+UseG1GC
+
+**YoungGC**:
+
+​		Serial;
+
+​		Parallel Scavenge;
+
+​		ParNew;
+
+**Old Gen** : 
+
+​		Serial Old( MSC)；
+
+​		Parallel Old；
+
+​		CMS;
+
+**G1**:不在区分Young和Old区
+
+<img src="C:\Users\user\AppData\Roaming\Typora\typora-user-images\image-20200118163622075.png" alt="image-20200118163622075" style="zoom:50%;" />
+
 
 
 
