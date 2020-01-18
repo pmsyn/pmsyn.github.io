@@ -640,9 +640,15 @@ System.out.println(referenceQueue.poll());//java.lang.ref.PhantomReference@74a14
 
 ## 19 OOM
 
-**java.lang.StackOverflowError** 管运行   
-**java.lang.OutOfMemoryError**: Java heap space 管存储  
-**java.lang.OutOfMemoryError**: GC overhead limit exceeded  
+### 19.1 java.lang.StackOverflowError
+
+管运行   
+
+### 19.2 java.lang.OutOfMemoryError  
+
+ Java heap space 管存储  
+
+#### 19.2.1 java.lang.OutOfMemoryError ：GC overhead limit exceeded  
 -xx : MaxDirectMemorysize= 5m  
 
 * GC回收时间过长时会抛出OutOfMemroyError，**超过98%的时间用来做GC并且回收了不到2%的堆内存**
@@ -650,10 +656,10 @@ System.out.println(referenceQueue.poll());//java.lang.ref.PhantomReference@74a14
 * 那就是GC清理的这么点内存很快会再次填满，迫使GC再次执行.这样就形成恶性循环,
 * CPU使用率-直是100%， 而GC 却没有任何成果
 
-**java.lang.OutOfMemoryError**: Direct buffer memory    
+#### 19.2.2 java.lang.OutOfMemoryError：Direct buffer memory  
 
 * 导致原因:
- 写NIO程序经常使ByteBuffer来读取或者写入数据， 这是一 一种基于通道(Channel)|与缓冲区(Buffer)的I/0方式,
+ 写NIO程序经常使ByteBuffer来读取或者写入数据， 这是一种基于通道(Channel)|与缓冲区(Buffer)的I/0方式,
 它可以使用Native函数库直接分配堆外内存，然后通过一个 存储在Java雄里面的DirectByteBuffer对象作为这块内存的引用进行操作。
 这样能在-些场景中显蓍提高性能，因为避免了在Java堆和Native堆中来回复制数据。  
 ByteBuffer.allocate(capability)第-种方式是分配JVM堆内存，属于GC 管辖范围，由于需要拷贝所以速度相对较慢  
@@ -664,8 +670,7 @@ ByteBuffer.allocteDirect(capability)第一种方式是分配OS 本地内存，�
 
 ```java
 System.out.println("初始JVM最大内存："+VM.maxDirectMemory());
-ByteBuffer byteBuffer = ByteBuffer.allocateDirect(10*1024*1024);
-
+ByteBuffer byteBuffer = ByteBuffer.allocateDirect(10*1024*1024);//10m
 ```
 结果：  
 [GC (Allocation Failure) [PSYoungGen: 1024K->488K(1536K)] 1024K->592K(5632K), 0.0007910 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]  
@@ -674,8 +679,42 @@ ByteBuffer byteBuffer = ByteBuffer.allocateDirect(10*1024*1024);
 [Full GC (System.gc()) [PSYoungGen: 488K->0K(1536K)] [ParOldGen: 200K->635K(4096K)] 688K->635K(5632K), [**Metaspace: 3424K->3424K**(1056768K)], 0.0056662 secs] [Times: user=0.00 sys=0.00, real=0.01 secs]  
 Exception in thread "main" java.lang.OutOfMemoryError: Direct buffer memory
 
-**java.lang.OutOfMemoryError**: unable to create new native thread  
-**java.lang.OutOfMemoryError**: Metaspace  
+#### 19.2.3 java.lang.OutOfMemoryError：unable to create new native thread  
+
+非root用户登陆Linux系统测试；服务器级别调参调优
+
+高并发请求服务器时，准确的讲native thread异常与对应的平台有关
+导致原因:
+
+  1. 你的应用创建 了太多线程了，一个应用进程创建多个线程,超过系统承裁极限；
+    
+  2. 你的服务器并不允许你的应用程序创建这么多线程, linux系统默认允许单个进程可以创建的线程数是1024个，你的应用创建超过这个数量,就会报**java. lang. OutOfMemoryError: unable to create new native thread**
+
+解决办法: 
+
+   1. 想办法降低应用程序创建线程的数量，分析应用是否真的需要创建这么多线程，如果不是，改代码将线程数降到最低；
+
+   2. 对于有的应用,确实需要创建很多线程远超边Linux系统的默认1024个线程的限制,可以通过修改Linux服务器配置,扩大Linux默认限制。
+
+#### 19.2.4 java.lang.OutOfMemoryError: Metaspace  
+
+使用-XX:PrintFlagsInitial 查看初始参数
+
+JVM参数XX:Metaspacesize-8m - XX:MaxMetaspacesize=8m
+Java 8及之后的版本使用Metaspace来替代永久代。
+
+Metaspace是方法在HotSpot中的实现，它与持久代最大的区别在于: Metaspace并不在虚拟机内存中而是使用本地内存也即在java8中class metadata(the virtual machines internal presentation of Java class), 被存储在叫做Metaspace 的native memory
+永久代(java8后被原空间Metaspace取代)存放了以下信息:
+虚拟机加载的类信息
+常量池
+静态变量
+即时编译后的代码
+
+
+
+
+
+
 
 
 
@@ -688,7 +727,3 @@ Exception in thread "main" java.lang.OutOfMemoryError: Direct buffer memory
 
 写作规范参考：[《中文技术文档的写作规范》](https：//github.com/ruanyf/document-style-guide "中文技术文档的写作规范")
 
-
-```
-
-```
