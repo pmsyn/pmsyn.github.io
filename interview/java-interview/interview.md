@@ -149,23 +149,23 @@ ReentrantReadWriteLock 其读锁是共享锁，其写锁是独占锁。
 
 ### 7. 闭锁CountDownLatch
 - CountDownLatch一个正数计数器，countDown方法对计数器做减操作，await方法等待计数器达到0。所有await的线程都会阻塞直到计数器为0或者等待线程中断或者超时。
-	
-		``` java
-	CountDownLatch latch = new CountDownLatch(5);
-	try {
-	    //执行线程操作
-	    for(int i =0;i<6;i++) {
-	        new Thread(() ->{
-	            latch.countDown();
-           }，"线程"+i).start();				
-       }
-	    //等待线程执行完成
-	    latch.await();
-	    System.out.println("完成");
-	} catch (InterruptedException e) {
-	    e.printStackTrace();
-	}
-	```
+
+``` java
+CountDownLatch latch = new CountDownLatch(5);
+try {
+    //执行线程操作
+    for(int i =0;i<6;i++) {
+        new Thread(() ->{
+            latch.countDown();
+        }，"线程"+i).start();				
+    }
+    //等待线程执行完成
+    latch.await();
+    System.out.println("完成");
+} catch (InterruptedException e) {
+    e.printStackTrace();
+}
+```
 
 
 ## 8.CyclicBarrier
