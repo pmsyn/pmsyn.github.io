@@ -52,8 +52,9 @@ CAS并发原语体现在JAVA语言中就是sun.misc.Unsafe类中的各个方法�
 Unsafe
 
 * 1.Unsafe是CAS的核心类，由于Java方法无法直接访问底层系统，需要通过本地(native)方法来访问，Unsafe相当于一个后门，基于该
-类可以直接操作特定内存的数据。Unsafe类存在于sun.misc包中，其内部方法操作可以像C的指针一样直接操作内存，因为Java中CAS操作的执行依赖于Unsafe类的方法。  
-**注意**：Unsafe类中的所有方法都是native修饰的，也就是说Unsafe类中的方法都直接调用操作系统底层资源执行相应任务  
+  类可以直接操作特定内存的数据。Unsafe类存在于sun.misc包中，其内部方法操作可以像C的指针一样直接操作内存，因为Java中CAS操作的执行依赖于Unsafe类的方法。  
+  **注意**：Unsafe类中的所有方法都是native修饰的，也就是说Unsafe类中的方法都直接调用操作系统底层资源执行相应任务  
+
 * 2.变量valueOffset，表示该变量值在内存中的偏移地址，因为Unsafe就是根据内存偏移地址获取数据的。
 
 		/**
@@ -165,21 +166,23 @@ ReentrantReadWriteLock 其读锁是共享锁，其写锁是独占锁。
 ## 8.CyclicBarrier
 栅栏类似于闭锁，它能阻塞一组线程直到某个事件的发生。栅栏与闭锁的关键区别在于，所有的线程必须同时到达栅栏位置，才能继续执行。闭锁用于等待事件，而栅栏用于等待其他线程
 
-	CyclicBarrier cyclicBarrier = new CyclicBarrier(8， () -> {
-			System.out.println("线程执行结束");
-		});
-		
-		for(int i=0;i<8;i++) {
-			new Thread(() ->{
-				System.out.println(Thread.currentThread().getName());
-				try {
-					//线程阻塞，直到所有线程执行完成
-					cyclicBarrier.await();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}， "第"+i+"个线程");
-		}
+```java
+CyclicBarrier cyclicBarrier = new CyclicBarrier(8， () -> {
+		System.out.println("线程执行结束");
+	});
+	
+	for(int i=0;i<8;i++) {
+		new Thread(() ->{
+			System.out.println(Thread.currentThread().getName());
+			try {
+				//线程阻塞，直到所有线程执行完成
+				cyclicBarrier.await();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}， "第"+i+"个线程");
+	}
+```
 
 **CountDownLatch**和**CyclicBarrier**的比较
 
@@ -192,8 +195,10 @@ ReentrantReadWriteLock 其读锁是共享锁，其写锁是独占锁。
  主要作用：
 
 - 1、用于**多个共享资源的互斥使用**，
+
 - 2、用于**并发线程数的控制**。
 
+		``` java
 		//模拟6个线程使用3个资源
 		Semaphore semaphore = new Semaphore(3);
 		for(int i=1;i<=6;i++) {
@@ -203,15 +208,15 @@ ReentrantReadWriteLock 其读锁是共享锁，其写锁是独占锁。
 					System.out.println(Thread.currentThread().getName()+"获得资源");
 					TimeUnit.SECONDS.sleep(3);
 					System.out.println(Thread.currentThread().getName()+"释放资源");
-					
-				} catch (InterruptedException e) {
+		} catch (InterruptedException e) {
 					e.printStackTrace();
-				}finally {
-					semaphore.release();
-				}
+	     }finally {
+	      	semaphore.release();
+	     }
 				
 			} , "线程"+i).start();
 		}
+	```
 
 ## 10.队列
 
@@ -246,13 +251,16 @@ Reentrantlock两者都可以，默认非公平锁，构造方法可以传入bool
 * 5.锁绑定多个条件Condition  
 synchronized没有
 Reentrantlock用来实现分组唤醒得要唤醒的线程们，可以精确唤醒， 而不是像synchronized 要么随机唤醒一个线程，要么唤醒全部线程。
- 
+
 ## 12.Callable接口
 带返回值的线程
     
-	FutureTask result = new FutureTask<>(CallalbelImpl);//CallalbelImpl实现类
-	new Thread(result).start();
-	result.get();//获取返回值
+```java
+FutureTask result = new FutureTask<>(CallalbelImpl);//CallalbelImpl实现类
+new Thread(result).start();
+result.get();//获取返回值
+
+```
 
 FutureTask也可用于闭锁的操作。
 
@@ -266,53 +274,57 @@ FutureTask也可用于闭锁的操作。
 - 第二：提高响应速度。当任务到达时，任务可以不需要的等到线程创建就能立即执行。  
 - 第三：提高线程的可管理性。线程是稀缺资源，如果无限制的创建，不仅会消耗系统资源，还会降低系统的稳定性，使用线程池可以进行统一的分配， 调优和监控。
 
-	 	//一池5线程，执行长期的任务，性能好很多
-        ExecutorService fixedThreadPool = Executors.newFixedThreadPool(5);
-        //一池1线程，一个任务执行的场景
-        ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
-        //一池N线程，执行很多短期异步的小程序或负载较轻的服务
-        ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
-        try {
-            for(int i = 1;i<=10;i++){
+```java
+//一池5线程，执行长期的任务，性能好很多
+ExecutorService fixedThreadPool = Executors.newFixedThreadPool(5);
+//一池1线程，一个任务执行的场景
+ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();
+//一池N线程，执行很多短期异步的小程序或负载较轻的服务
+ExecutorService cachedThreadPool = Executors.newCachedThreadPool();
+try {
+	for(int i = 1;i<=10;i++){
 				//执行
-                fixedThreadPool.execute(() -> {
-                    System.out.println(Thread.currentThread().getName()+"处理任务");
-                });
-            }
-        } catch (Exception e) {
+		fixedThreadPool.execute(() -> {
+        	System.out.println(Thread.currentThread().getName()+"处理任务");
+         });
+      }
+} catch (Exception e) {
            
-        }finally{
-			 fixedThreadPool.shutdown();
-		}
+}finally{
+	fixedThreadPool.shutdown();
+}
+```
 
 ### 13.2 ThreadPoolExecutor7个重要参数说明
 
 
-	 	public ThreadPoolExecutor(int corePoolSize，//核心线程数
-                              int maximumPoolSize，//最大线程数
-                              long keepAliveTime，//空闲线程存活时间
-                              TimeUnit unit，//存活时间单位
-                              BlockingQueue<Runnable> workQueue，//任务队列
-                              ThreadFactory threadFactory，//线程工程
-                              RejectedExecutionHandler handler//拒绝策略)
-	{
-        if (corePoolSize < 0 ||
-            maximumPoolSize <= 0 ||
-            maximumPoolSize < corePoolSize ||
-            keepAliveTime < 0)
-            throw new IllegalArgumentException();
-        if (workQueue == null || threadFactory == null || handler == null)
-            throw new NullPointerException();
-        this.acc = System.getSecurityManager() == null ?
-                null ：
-                AccessController.getContext();
-        this.corePoolSize = corePoolSize;
-        this.maximumPoolSize = maximumPoolSize;
-        this.workQueue = workQueue;
-        this.keepAliveTime = unit.toNanos(keepAliveTime);
-        this.threadFactory = threadFactory;
-        this.handler = handler;
-    }
+```java
+ 	public ThreadPoolExecutor(int corePoolSize，//核心线程数
+                          int maximumPoolSize，//最大线程数
+                          long keepAliveTime，//空闲线程存活时间
+                          TimeUnit unit，//存活时间单位
+                          BlockingQueue<Runnable> workQueue，//任务队列
+                          ThreadFactory threadFactory，//线程工程
+                          RejectedExecutionHandler handler//拒绝策略)
+{
+    if (corePoolSize < 0 ||
+        maximumPoolSize <= 0 ||
+        maximumPoolSize < corePoolSize ||
+        keepAliveTime < 0)
+        throw new IllegalArgumentException();
+    if (workQueue == null || threadFactory == null || handler == null)
+        throw new NullPointerException();
+    this.acc = System.getSecurityManager() == null ?
+            null ：
+            AccessController.getContext();
+    this.corePoolSize = corePoolSize;
+    this.maximumPoolSize = maximumPoolSize;
+    this.workQueue = workQueue;
+    this.keepAliveTime = unit.toNanos(keepAliveTime);
+    this.threadFactory = threadFactory;
+    this.handler = handler;
+}
+```
 
 * 1.**corePoolSize**：线程池中的常驻核心线程数口
 * 2.**maximumPoolSize**：线程池能够容纳同时执行的最大线程数，此值必须大于等于1
@@ -339,23 +351,25 @@ FutureTask也可用于闭锁的操作。
 ### 13.3 RejectedExecutionHandler：
 **拒绝策略**：当任务数大于最大线程数(maximumPoolSize)+任务队列数(workQueue)时采取的策略
 
-	ExecutorService threadPoolExecutor = new ThreadPoolExecutor(
-			2,//corePoolSize
-			5,//maximumPoolSize
-			1,//keepAliveTime
-			TimeUnit.SECONDS,//unit
-			new LinkedBlockingQueue(3),//workQueue
-			Executors.defaultThreadFactory(),//threadFactory
-			new ThreadPoolExecutor.AbortPolicy());//handler
-        try {
-            for(int i = 1;i<=9;i++){
-                threadPoolExecutor.execute(() -> {
-                    System.out.println(Thread.currentThread().getName());
-                });
-            }
-		} catch (Exception e) {
-            threadPoolExecutor.shutdown();
-	}
+```java
+ExecutorService threadPoolExecutor = new ThreadPoolExecutor(
+		2,//corePoolSize
+		5,//maximumPoolSize
+		1,//keepAliveTime
+		TimeUnit.SECONDS,//unit
+		new LinkedBlockingQueue(3),//workQueue
+		Executors.defaultThreadFactory(),//threadFactory
+		new ThreadPoolExecutor.AbortPolicy());//handler
+    try {
+        for(int i = 1;i<=9;i++){
+            threadPoolExecutor.execute(() -> {
+                System.out.println(Thread.currentThread().getName());
+            });
+        }
+	} catch (Exception e) {
+        threadPoolExecutor.shutdown();
+}
+```
 
 1. **AbortPolicy(默认)**：直接抛出RejectedExecutionException 异常阻止系统正常运行。
 2. **CallerRunsPolicy**："调用者运行"一种调节机制，该策略既不会抛弃任务，也不会抛出异常，而是将某些任务回退到调用者，从而降低新任务的流量。
@@ -381,7 +395,7 @@ IO 密集型，即该任务需要大量的 IO，即大量的阻塞。
 **CPU 核数\*2**
 
 IO 密集型时，大部分线程都阻塞，故需要多配置线程数：
- 
+
 **参考公式**： CPU 核数/1-阻塞系数  阻塞系数在 0.8~0.9 之间
 
 比如 8 核 CPU： 8/1-0.9 = 80 个线程数
@@ -393,26 +407,28 @@ IO 密集型时，大部分线程都阻塞，故需要多配置线程数：
 死锁是指两个或两个以上的进程在执行过程中,因争夺资源而造成的一种互相等待的现象,若无外力干涉那它们都将无法推进下去，如果系统资源充足，进程的资源请求都能够得到满足，死锁出现的可能性就很低，否则就会因争夺有限的资源而陷入死锁。  
 ### 14.2 代码：
 
-	class DeadLockDemo implements  Runnable{
-	    private String lockA;
-	    private String lockB;
+```java
+class DeadLockDemo implements  Runnable{
+    private String lockA;
+    private String lockB;
 
-	    DeadLockDemo(String lockA,String lockB){
-	        this.lockA = lockA;
-	        this.lockB = lockB;
-	    }
-	
-	    @Override
-	    public void run() {
-	        synchronized (lockA){
-	            System.out.println(Thread.currentThread().getName()+"持有"+lockA+"尝试持有："+lockB);
-	            try{ TimeUnit.SECONDS.sleep(2); }catch(Exception e){ }
-	            synchronized (lockB){
-	                System.out.println(Thread.currentThread().getName()+"持有"+lockB+"尝试持有："+lockA);
-	            }
-	        }
-	    }
-	}
+    DeadLockDemo(String lockA,String lockB){
+        this.lockA = lockA;
+        this.lockB = lockB;
+    }
+    
+    @Override
+    public void run() {
+        synchronized (lockA){
+            System.out.println(Thread.currentThread().getName()+"持有"+lockA+"尝试持有："+lockB);
+            try{ TimeUnit.SECONDS.sleep(2); }catch(Exception e){ }
+            synchronized (lockB){
+                System.out.println(Thread.currentThread().getName()+"持有"+lockB+"尝试持有："+lockA);
+            }
+        }
+    }
+}
+```
 
 ### 14.3 解决办法：
 * 查看进程：jps定位进程号 
@@ -461,7 +477,8 @@ IO 密集型时，大部分线程都阻塞，故需要多配置线程数：
 		方法区中常量引用的对象。  
 		本地方法栈中的JNI（Native方法）引用对象。
 ## 17.JVM
-###17.1 JVM参数
+### 17.1 JVM参数
+
 * 标配参数：java-version;-help;-showversion
 * X参数（了解）：
 	* -Xint（解释执行）；
@@ -497,7 +514,8 @@ IO 密集型时，大部分线程都阻塞，故需要多配置线程数：
 #### 17.3.4  -Xmn
 设置年轻代大小
 #### 17.3.5  -XX:+MetaspaceSize
-设置元空间大小，元空间的本质和永久代类似，都是对JVM规范中方法区的实现，不过**元空间与永久代之间最大的区别在于**：**元空间并不在虚拟机中，而是使用本地内存**。因此，默认情况下，元空间的大小仅受本地内存限制。  
+设置元空间大小，元空间的本质和永久代类似，都是对JVM规范中方法区的实现，不过**元空间与永久代之间最大的区别在于**：**元空间并不在虚拟机中，而是使用本地内存**。因此，默认情况下，元空间的大小仅受本地内存限制。 
+
 -Xms128m -Xmx4096m -Xss1024k -XX: MetaspaceSize=512m -XX: PrintCommandLineFlags -XX:+PrintGCDetails -XX:+UseSeria1GC
 
 #### 17.3.6  -XX:+PrintGCDetails
@@ -510,10 +528,10 @@ IO 密集型时，大部分线程都阻塞，故需要多配置线程数：
 [Full GC (Allocation Failure) [PSYoungGen: 0K->0K(2560K)] [ParOldGen: 632K->615K(7168K)] 632K->615K(9728K), [Metaspace: 3358K->3358K(1056768K)], 0.0061335 secs] [Times: user=0.11 sys=0.00, real=0.01 secs]   
 Exception in thread "main" java.lang.OutOfMemoryError: Java heap space at interview.App.main(App.java:11)  
 日志说明：  
-[**GC (Allocation Failure) [PSYoungGen** GC类型 **：1861K** YoungGC前新生代内存占用**->488K** YoungGC后新生代内存占用**(2560K** 新生代总共大小**)] 1861K** YoungGC前JVM堆内存占用**->732K** YoungGC后JVM堆内存占用**(9728K** JVM堆总大小**), 0.0084952 secs** YoungGC耗时] [Times: **user=0.00** YoungGC用户耗时 **sys=0.00** YoungGC系统耗时, **real=0.02 secs** YoungGC实际耗时]    
+[**GC (Allocation Failure) [PSYoungGen** GC类型 **：1861K** YoungGC前新生代内存占用**->488K** YoungGC后新生代内存占用**(2560K** 新生代总共大小)] **1861K** YoungGC前JVM堆内存占用**->732K** YoungGC后JVM堆内存占用**(9728K** JVM堆总大小**), 0.0084952 secs** YoungGC耗时] [Times: **user=0.00** YoungGC用户耗时 **sys=0.00** YoungGC系统耗时, **real=0.02 secs** YoungGC实际耗时]    
 
 [GC (Allocation Failure) [PSYoungGen: 1861K->488K(2560K)] 1861K->732K(9728K), 0.0084952 secs] [Times: user=0.00 sys=0.00, real=0.02 secs] 
-   
+
 **GC规律**：GC类型 GC前内存->GC后内存（该区总内存）
 
 #### 17.3.7 -XX:SurvivorRatio
@@ -535,7 +553,7 @@ SurvivorRatio值设置eden区比例占多少，S0/S1相同
  Metaspace       used 3461K, capacity 4496K, committed 4864K, reserved 1056768K  
   class space    used 379K, capacity 388K, committed 512K, reserved 1048576K
 
- 
+
 **MinorGC的过程( 复制->清空->互换) ** 
 **1: eden、 SuryivorFrom复制到SuryivorTo， 年龄+1**  
 首先，当Eden区满的时候会触发第一 次GC,把还活着的对象拷贝到SurvivorFrom区， 当Eden
@@ -577,15 +595,18 @@ Object obj = new Object();
 ### 18.3 弱引用WeakReference
 只要GC就进行回收，用 java.lang.ref.WeakReference类来实现
 
-    Object obj = new Object();
-    WeakReference<Object> weakReference = new WeakReference(obj);
-    System.out.println(obj);//java.lang.Object@4554617c
-    System.out.println(weakReference.get());//java.lang.Object@4554617c
-    System.out.println("----------");
-    obj=null;
-    System.gc();
-    System.out.println(obj);//null
-    System.out.println(weakReference.get());//null
+```java
+Object obj = new Object();
+WeakReference<Object> weakReference = new WeakReference(obj);
+System.out.println(obj);//java.lang.Object@4554617c
+System.out.println(weakReference.get());//java.lang.Object@4554617c
+System.out.println("----------");
+obj=null;
+System.gc();
+System.out.println(obj);//null
+System.out.println(weakReference.get());//null
+
+```
 
 ### 18.4 虚引用PhantomReference
 虛引用需要 java.lang.ref.PhantomReference 类来实现。  
@@ -600,28 +621,30 @@ Java技术允许使用finalize()方法在垃圾收集器将对象从内存中清
 **GC 回收之前放到 ReferenceQueue 引用队列中**-虚引用通知机制
 
 
-	Object obj = new Object();
-    ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
-    PhantomReference phantomReference = new PhantomReference(obj,referenceQueue);
-    System.out.println("---GC前----");  
-    System.out.println(obj);//java.lang.Object@4554617c
-    System.out.println(phantomReference.get());//null
-    System.out.println(referenceQueue.poll());//null
+```java
+Object obj = new Object();
+ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
+PhantomReference phantomReference = new PhantomReference(obj,referenceQueue);
+System.out.println("---GC前----");  
+System.out.println(obj);//java.lang.Object@4554617c
+System.out.println(phantomReference.get());//null
+System.out.println(referenceQueue.poll());//null
 
-    System.out.println("---GC后----");
-    obj = null;
-    System.gc();
-    System.out.println(obj);//null
-    System.out.println(phantomReference.get());//null
-    System.out.println(referenceQueue.poll());//java.lang.ref.PhantomReference@74a14482  
+System.out.println("---GC后----");
+obj = null;
+System.gc();
+System.out.println(obj);//null
+System.out.println(phantomReference.get());//null
+System.out.println(referenceQueue.poll());//java.lang.ref.PhantomReference@74a14482  
+```
 
 ## 19 OOM
 
-**java.lang.StackOverflowError **管运行   
+**java.lang.StackOverflowError** 管运行   
 **java.lang.OutOfMemoryError**: Java heap space 管存储  
 **java.lang.OutOfMemoryError**: GC overhead limit exceeded  
 -xx : MaxDirectMemorysize= 5m  
- 
+
 * GC回收时间过长时会抛出OutOfMemroyError，**超过98%的时间用来做GC并且回收了不到2%的堆内存**
 * 连续多次GC都只回收了不到2%的极端情况下才会抛出。假如不抛出GC overhead limit 错误会发生什么停况呢?
 * 那就是GC清理的这么点内存很快会再次填满，迫使GC再次执行.这样就形成恶性循环,
@@ -639,8 +662,11 @@ ByteBuffer.allocteDirect(capability)第一种方式是分配OS 本地内存，�
 
 -Xms5m -Xmx5m -XX:+PrintGCDetails -XX:MaxDirectMemorySize=5m  
 
-	System.out.println("初始JVM最大内存："+VM.maxDirectMemory());
-	ByteBuffer byteBuffer = ByteBuffer.allocateDirect(10*1024*1024);
+```java
+System.out.println("初始JVM最大内存："+VM.maxDirectMemory());
+ByteBuffer byteBuffer = ByteBuffer.allocateDirect(10*1024*1024);
+
+```
 结果：  
 [GC (Allocation Failure) [PSYoungGen: 1024K->488K(1536K)] 1024K->592K(5632K), 0.0007910 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]  
 初始JVM最大内存：5242880  
@@ -662,3 +688,7 @@ Exception in thread "main" java.lang.OutOfMemoryError: Direct buffer memory
 
 写作规范参考：[《中文技术文档的写作规范》](https：//github.com/ruanyf/document-style-guide "中文技术文档的写作规范")
 
+
+```
+
+```
