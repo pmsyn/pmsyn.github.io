@@ -1,3 +1,7 @@
+---
+typora-root-url: img
+---
+
 
 # 常见知识点
 
@@ -20,7 +24,7 @@ JMM关于同步的规定：
 
 由于JVM运行程序的实体是线程，而每个线程创建时JVM都会为其创建一个工作内存(有些地方称为栈空间)，工作内存是每个线程的私有数据区域，而Java内存模型中规定所有变量都存储在**主内存**，主内存是共享内存区域，所有线程都可以访问，**但线程对变量的操作(读取赋值等)必须在工作内存中进行，首先要将变量从主内存拷贝的自己的工作内存空间，然后对变量进行操作，操作完成后再将变量写回主内存**，不能直接操作主内存中的变量，各个线程中的工作内存中存储着主内存中的**变量副本拷贝**，因此不同的线程间无法访问对方的工作内存，线程间的通信(传值)必须通过主内存来完成，其简要访问过程如下图：
 
-![](https：//github.com/pengmengsheng/pengmengsheng.github.io/blob/master/interview/java-interview/img/2%20(1).png)
+![](/2%20(1).png)
 
 JMM特性：
 
@@ -30,17 +34,38 @@ JMM特性：
 
 * 3.**有序性**（按照自己想要执行的顺序执行线程）：有序性是指程序在执行的时候，程序的代码执行顺序和语句的顺序是一致的。（Join）
 
-![](https：//github.com/pengmengsheng/pengmengsheng.github.io/blob/master/interview/java-interview/img/2%20(2).png)
+  计算机在执行程序时，为了提高性能，编译器和处理器的常常会对指令做重排，一般分以下3种：
+  **源代码—>编译器优化的重排—>指令并行的重排—>内存系统的重排—>最终执行的指令**
 
-![](https：//github.com/pengmengsheng/pengmengsheng.github.io/blob/master/interview/java-interview/img/2%20(3).png)
+  单线程环境里面确保程序最终执行结果和代码顺序执行的结果一致。
+  处理器在进行重排序时必须要考虑指令之间的**数据优赖性**
+  多线程环境中线程交替执行,由于编译器优化重排的存在，两个线程中使用的变量能否保证一致性是无法确定的,结果无法预测。
 
-![](https：//github.com/pengmengsheng/pengmengsheng.github.io/blob/master/interview/java-interview/img/2%20(4).png)
+  volatile实现**禁止指令重排优化**。从而避免多线程环境下程序出现乱序执行的现象
+  先了解一个概念，内存屏障(Memory Barrier)又称内存栅栏，是一-个CPU指令，它的作用有两个:
+  * 一是保证特定操作的执行顺序。
+  * 二是保证某些变量的内存可见性(利用该特性实现vlatile的内存可见性) 。
+  由于编译器和处理8都能执行指令重排优化。如果在指令间插入一条Memory Barrier则会告诉编译器和CPU,不管什么指令都不能和这条Memory Brrier指令重排序，也就是说**通过插入内存屏障禁止在内存屏障前后的指令执行重排序优化**。内存屏障另外一个作用是强制刷出各种CPU的缓存数据，因此任何CPU上的线程都能读取到这些數据的最新版本。
+
+![](/2%20(4).png)
 
 ## 3. 单例模式DCL（Double Check Lock）双端检锁机制
 
- ![](https：//github.com/pengmengsheng/pengmengsheng.github.io/blob/master/interview/java-interview/img/3%20(1).png)
+```java
+//DCL (Quble Check Lock 双端检锁机制)
+public static SingletonDemo getInstance(){
+    if(instance== null){
+        synchronized (SingletonDemo.class){
+            if(instance == nu11){
+                instance = new SingletonDemo();
+            }
+        }
+    }
+    return instance;
+}
+```
 
-![](https：//github.com/pengmengsheng/pengmengsheng.github.io/blob/master/interview/java-interview/img/3%20(2).png)
+![](/3%20(2).png)
 
 ## 4.CAS(比较并交换)
 CAS的全称为Compare-And-Swap， **它是一条CPU并发原语**。  
@@ -103,26 +128,30 @@ ReentrantLock **默认：NonfairSync（非公平锁）**，传入true，Reentran
 * **非公平锁：** a nonfair lock permits barging： threads requesting a lock can jump ahead of the queue of waiting threads if the lockhappens to be available when it is requested.  
 非公平锁比较粗鲁，上来就直接尝试占有锁，如果尝试失败，就再采用类似公平锁那种方式。
 
-### 6.2可重入锁（递归锁）——synchronized、ReentrantLock
+### 6.2可重入锁（递归锁）：synchronized、ReentrantLock
 线程可以进入任何一个他已经拥有的锁所同步着的代码块。
 
-	public synchronized void a () {
-		b();
-	}
-	public synchronized void b () {
-		
-	}
+```java
+public synchronized void a () {
+	b();
+}
+public synchronized void b () {
+	
+}
+```
 
 ### 6.3自旋锁（spinlock）
 - 尝试获取锁的线程**不会立即阻塞**，而是**采用循环的方式去尝试获取锁**，这样的好处是减少线程上下文切换的消耗，缺点是循环会消耗CPU。
 
-		AtomicReferencec Thread> atomicReference=new AtomicReference<>();
-		public void myLock(){
-		Thread thread =Thread.currentThread();
-		while(!atomicReference.compareAndset(nu11， thread)){
-
-			}
-		}
+``` java
+AtomicReferencec Thread> atomicReference=new AtomicReference<>();
+public void myLock(){
+    Thread thread =Thread.currentThread();
+    while(!atomicReference.compareAndset(nu11, thread)){
+        
+    }
+}
+```
 
 ### 6.4独占锁（写锁）/共享锁（读锁）/互斥锁
 * 独占锁：该锁只能被一个线程所持有。ReentrantLock 和Synchronized都是独占锁
@@ -442,6 +471,8 @@ class DeadLockDemo implements  Runnable{
 ## 15.JVM
 ### 15.1 JVM内存结构
 
+![](/JVM%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E6%A6%82%E8%A7%88.jpg)
+
 ### 15.2 GC作用域
 
 ### 15.3 常见的垃圾回收算法
@@ -449,39 +480,39 @@ class DeadLockDemo implements  Runnable{
 
 * **复制**
 
-	MinorGC的过程( 复制->清空->互换)  
-	1: eden、 SurvivorFrom 复制到SurvivorTo，年龄+1  
-	首先，当Eden区 满的时候会触发第一次GC,把还活 着的对象拷贝到SurvivorFrom区，当Eden
-	区再次触发GC的时候会扫描Eden区和From区域,对这两个区域进行垃圾回收，经过这次回
-	收后还存活的对象，则直接复制到To区域(如果有对象的年龄已经达到了老年的标准，则赋
-	值到老年代区)，同时把这些对象的年龄+1  
-	2:清空eden、SurvivorFrom	然后，清空Eden和SurvivorFrom中的对象，也即复制之后有交换，谁空谁是to  
-	3: SurvivorTo和 SurvivorFrom互换
-	最后，SurvivorTo和SurvivorFrom互 换，原SurvivorTo成 为下一次GC时的SurvivorFrom区。部
-	分对象会在From和To区域中复制来复制去，如此交换15次(由JVM参数MaxTenuringThreshold 决定，这个参数默认是15),最终如果还是存活，就存入到老年代。
+	MinorGC的过程( 复制->清空->互换)
+	
+	1. eden、 SurvivorFrom 复制到SurvivorTo，年龄+1
+	   首先，当Eden区 满的时候会触发第一次GC,把还活 着的对象拷贝到SurvivorFrom区，当Eden区再次触发GC的时候会扫描Eden区和From区域,对这两个区域进行垃圾回收，经过这次回收后还存活的对象，则直接复制到To区域(如果有对象的年龄已经达到了老年的标准，则赋值到老年代区)，同时把这些对象的年龄+1 。
+	2. 清空eden、SurvivorFrom 然后，清空Eden和SurvivorFrom中的对象，也即复制之后有交换，谁空谁是to 
+	3. SurvivorTo和 SurvivorFrom互换最后，SurvivorTo和SurvivorFrom互 换，原SurvivorTo成 为下一次GC时的SurvivorFrom区。部分对象会在From和To区域中复制来复制去，如此交换15次(由JVM参数MaxTenuringThreshold 决定，这个参数默认是15),最终如果还是存活，就存入到老年代。
+	
+* **标记清除(Mark-Sweep) **
 
-* **标记清除**
+  算法分成标记和清除两个阶段，先标记出要回收的对象，然后统一回收这些对象。
 
-	垃圾收集算法：标记清除法(Mark-Sweep)  
-	算法分成标记和清除两个阶段，先标记出要回收的对象，然后统一回收这些对象。
-	形如:
+  <img src="/%E6%A0%87%E8%AE%B0%E6%B8%85%E9%99%A4%E7%AE%97%E6%B3%95.jpg" style="zoom:80%;" />
+
+  
 
 * **标记整理**  
-	1、标记  
-	2、压缩（整理）：再次扫描，并往一端移动存活对象  
-	* 好处：无内存碎片，可以利用bump  
-	* 缺点：需要移动对象成本  
+	
+	![](/%E6%A0%87%E8%AE%B0%E6%95%B4%E7%90%86%E7%AE%97%E6%B3%95.jpg)
 ## 16.GC Roots
 - 垃圾：内存中已经不再被使用到的空间
 
 - 如果判断一个对象是否可以被回收
-	- 引用计数法
-	- 可达性分析（根搜索路径），可作为GC Roots的对象：  
-	 	虚拟机栈（栈帧中的局部变量区，也叫局部变量表）中引用的对象。  
-		方法区中的类静态属性引用的对象。  
-		方法区中常量引用的对象。  
-		本地方法栈中的JNI（Native方法）引用对象。
-## 17.JVM
+	1. 引用计数法
+	
+	2. 可达性分析（根搜索路径）
+	
+	    作为GC Roots的对象：
+	
+	    * 虚拟机栈（栈帧中的局部变量区，也叫局部变量表）中引用的对象。
+	    * 方法区中的类静态属性引用的对象。
+	    * 方法区中常量引用的对象。
+	    * 本地方法栈中的JNI（Native方法）引用对象。
+## 17.JVM参数
 ### 17.1 JVM参数
 
 * 标配参数：java-version;-help;-showversion
@@ -506,7 +537,7 @@ class DeadLockDemo implements  Runnable{
 - 初始参数：java -XX:+PrintFlagsInitial
 - 修改后参数：java -XX:+PrintFlagsFinal
 - 运行时加的参数：java -XX:+PrintFlagsFinal -XX:MetaspaceSize=521m Test
-- 查看默认垃圾回收器：java -XX:+PrintCommandLineFlags -version
+- 查看默认垃圾收集器：java -XX:+PrintCommandLineFlags -version
 
 参数符号说明：“:=” 是修改后的参数值而普通“=”是初始参数
 ### 17.3 常用参数
@@ -531,44 +562,39 @@ class DeadLockDemo implements  Runnable{
 [**Full GC** (Allocation Failure) [PSYoungGen: 488K->0K(2560K)] [ParOldGen: 244K->632K(7168K)] 732K->632K(9728K), [Metaspace: 3358K->3358K(1056768K)], 0.0071535 secs] [Times: user=0.00 sys=0.00, real=0.01 secs]     
 [GC (Allocation Failure) [PSYoungGen: 0K->0K(2560K)] 632K->632K(9728K), 0.0003614 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]   
 [Full GC (Allocation Failure) [PSYoungGen: 0K->0K(2560K)] [ParOldGen: 632K->615K(7168K)] 632K->615K(9728K), [Metaspace: 3358K->3358K(1056768K)], 0.0061335 secs] [Times: user=0.11 sys=0.00, real=0.01 secs]   
-Exception in thread "main" java.lang.OutOfMemoryError: Java heap space at interview.App.main(App.java:11)  
-日志说明：  
-[**GC (Allocation Failure) [PSYoungGen** GC类型 **：1861K** YoungGC前新生代内存占用**->488K** YoungGC后新生代内存占用**(2560K** 新生代总共大小)] **1861K** YoungGC前JVM堆内存占用**->732K** YoungGC后JVM堆内存占用**(9728K** JVM堆总大小**), 0.0084952 secs** YoungGC耗时] [Times: **user=0.00** YoungGC用户耗时 **sys=0.00** YoungGC系统耗时, **real=0.02 secs** YoungGC实际耗时]    
+Exception in thread "main" java.lang.OutOfMemoryError: Java heap space at interview.App.main(App.java:11)
 
-[GC (Allocation Failure) [PSYoungGen: 1861K->488K(2560K)] 1861K->732K(9728K), 0.0084952 secs] [Times: user=0.00 sys=0.00, real=0.02 secs] 
+日志说明：
+![](/GC%E6%97%A5%E5%BF%97%E4%BF%A1%E6%81%AF.jpg)
 
 **GC规律**：GC类型 GC前内存->GC后内存（该区总内存）
 
 #### 17.3.7 -XX:SurvivorRatio
-设置新生代中eden和S0/S1空间的比例  
-默认  
--XX:SurvivorRatio=8,Eden:S0:S1=8:1:1  
-例如：  
--XX:SurvivorRatio=4,Eden:S0:S1=4:1:1  
+
+![](/%E5%A0%86%E7%9A%84%E7%BB%93%E6%9E%84.jpg)
+
+设置新生代中eden和S0/S1空间的比例 
+默认: -XX:SurvivorRatio=8,Eden:S0:S1=8:1:1  
+例如：-XX:SurvivorRatio=4,Eden:S0:S1=4:1:1  
 SurvivorRatio值设置eden区比例占多少，S0/S1相同
 
 **Heap 新生代堆空间（1/3）老年代堆空间（2/3）**  
- **PSYoungGen total 2560K**, used 126K [0x00000000ffd00000, 0x0000000100000000, 0x0000000100000000)  
-  **eden space 2048K**, 6% used [0x00000000ffd00000,0x00000000ffd1f9b0,0x00000000fff00000)  
+**PSYoungGen total 2560K**, used 126K [0x00000000ffd00000, 0x0000000100000000, 0x0000000100000000)    **eden space 2048K**, 6% used [0x00000000ffd00000,0x00000000ffd1f9b0,0x00000000fff00000)  
   **from space 512K**, 0% used [0x00000000fff00000,0x00000000fff00000,0x00000000fff80000)  
   **to   space 512K**, 0% used [0x00000000fff80000,0x00000000fff80000,0x0000000100000000)
 
- **ParOldGen       total 7168K**, used 615K [0x00000000ff600000, 0x00000000ffd00000, 0x00000000ffd00000)  
-  object space 7168K, 8% used [0x00000000ff600000,0x00000000ff699e98,0x00000000ffd00000)  
+ **ParOldGen       total 7168K**, used 615K [0x00000000ff600000, 0x00000000ffd00000, 0x00000000ffd00000) 
+ object space 7168K, 8% used [0x00000000ff600000,0x00000000ff699e98,0x00000000ffd00000)  
  Metaspace       used 3461K, capacity 4496K, committed 4864K, reserved 1056768K  
   class space    used 379K, capacity 388K, committed 512K, reserved 1048576K
 
-
 **MinorGC的过程( 复制->清空->互换) ** 
 **1: eden、 SuryivorFrom复制到SuryivorTo， 年龄+1**  
-首先，当Eden区满的时候会触发第一 次GC,把还活着的对象拷贝到SurvivorFrom区， 当Eden
-区再次触发GC的时候会扫描Eden区和From区域,对这两个区域进行垃圾回收，经过这次回
-收后还存活的对象,则直接复制到To区域(如果有对象的年龄已经达到了老年的标准，则赋
-值到老年代区)，同时把这些对象的年龄+1  
+首先，当Eden区满的时候会触发第一 次GC,把还活着的对象拷贝到SurvivorFrom区， 当Eden区再次触发GC的时候会扫描Eden区和From区域,对这两个区域进行垃圾回收，经过这次回收后还存活的对象,则直接复制到To区域(如果有对象的年龄已经达到了老年的标准，则赋值到老年代区)，同时把这些对象的年龄+1  
 **2:清空eden、SurvivorFrom**  
 然后，清空Eden和SurvivorFrom中的对象，也即复制之后有交换，谁空谁是to  
 **3: SurvivorTo和 SurvivorFrom 互换**  
-最后，SurvivorTo和SurvivorFrom互换，原SurvivorTo成为 下-次GC时的SurvivorFrom区。部分对象会在From和To区域中复制来复制去，如此交换15次(由JVM参数axTenuringThreshold决定.这个参数默认是151.最终如果还是存活.就在入到老年代
+最后，SurvivorTo和SurvivorFrom互换，原SurvivorTo成为 下-次GC时的SurvivorFrom区。部分对象会在From和To区域中复制来复制去，如此交换15次(由JVM参数axTenuringThreshold决定.这个参数默认是15.最终如果还是存活.就在入到老年代。
 
 #### 17.3.8 -XX:NewRatio
 配置年轻代与老年代在堆结构的占比  
@@ -617,7 +643,7 @@ System.out.println(weakReference.get());//null
 虛引用需要 java.lang.ref.PhantomReference 类来实现。  
 
 顾名思义，就是形同虚设，与其他几种引用都不同，虚引用并不会决定对象的生命周期。  
-如果一个对象仅持有虚引用，那么它就和没有任何引用一样，在任何时候都可能被垃圾回收器回收，它不能单独使用也不能通过它访问对象，虚引用必须和引用队列(ReferenceQueue)联合使用。
+如果一个对象仅持有虚引用，那么它就和没有任何引用一样，在任何时候都可能被垃圾收集器回收，它不能单独使用也不能通过它访问对象，虚引用必须和引用队列(ReferenceQueue)联合使用。
 虚引用的主要作用是跟踪对象被垃圾回收的状态。仅仅是提供了一种确保对象被 finalize 以后，做某些事情的机制。  
 PhantomReference 的get方法总是返回null,因此无法访问对应的引用对象。其意义在于说明-一个对 象已经进入 finalization 阶段，可以被gc回收， 用来实现比 fialization 机制更灵活的回收操作。
 换句话说，设置虛引用关联的唯一-目的，就是在这个对象被收集器回收的时候收到一个系统通知或者后续添加进-一步的处理。  
@@ -721,18 +747,18 @@ GC算法（引用计数/复制/标记清除/标记整理）是内存回收的方
 
 查看默认收集器参数：-XX:+CommandLineFlags
 
-### 20.1 Serial(串行垃圾回收器)
+### 20.1 Serial(串行垃圾收集器)
 
-为**单线程环境**设计且只使用一个线 程进行垃圾回收，会暂停所有的用户线程， 所以不适合服务器环境。
+![SerialGC](D:%5Cgithub%5Cpengmengsheng.github.io%5Cinterview%5Cjava-interview%5Cimg%5CSerialGC.jpg)
 
-JVM参数：-XX:+UseSerialGC
+串行收集器**采用单线程**stop-the-world的方式进行收集， 所以不适合服务器环境。它最适合单处理器计算机，因为它不能利用多处理器硬件，它在多处理器上对数据集较小（最大约100 MB）的应用很有用，因此Serial垃圾收集器依然是java虚拟机运行在Client模式下默认的新生代垃圾收集器。
+
+```JVM参数：-XX:+UseSerialGC ```
 
 开启后默认使用：Serial（Young区） + Serial Old（Old区）
 新生代使用复制算法，老年代使用标记-整理算法
 
-串行收集器是最古老，最稳定以及效率高的收集器，只使用一个线程去回收但其在进行垃圾收集过程中可能会产生较长的停顿("Stop-The-World"状态)。虽然在收集垃圾过程中需要暂停所有其他的工作线程，但是它简单高效，对于限定单个CPU环境来说，没有线程交互的开销可以获得最高的单线程垃圾收集效率，因此Serial垃圾收集器依然是java虚拟机运行在Client模式下默认的新生代垃圾收集器。
-
-### 20.2 ParNew（并行收集器）
+### 20.2 ParNew（并行垃圾收集器）
 
 使用多线程进行垃圾回收，在垃圾收集时，会Stop-the-World暂停其他所有的工作线程直到它收集结束。
 
@@ -743,25 +769,33 @@ JVM参数：-XX:+UseSerialGC
 
 -XX：ParallelGCThreads 限制线程数量，默认开启和CPU数目相同的线程数
 
-### 20.3 Parallel/Parallel Scavenge(并行垃圾回收器)
+### 20.3 Parallel/Parallel Scavenge(并行垃圾收集器)
 
-**多个垃圾收集线程并行工作，此时用户线程是暂停的**，适用于科学计算/大数据处理首台处理等弱交互场景
+![ParellelGC](D:%5Cgithub%5Cpengmengsheng.github.io%5Cinterview%5Cjava-interview%5Cimg%5CParellelGC.jpg)
 
-Parallel Scavenge收集器类似ParNew也是一个新生代垃圾收集器，使用复制算法，也是一个并行的多线程的垃圾收集器，价称吞吐量优先收集器。**串行收集器在新生代和老年代的并行化**。
+并行收集器也称为吞吐量收集器，它是类似于串行收集器的分代收集器。**串行收集器和并行收集器之间的主要区别是并行收集器具有多个线程**，这些线程用于加速垃圾收集。使用复制算法，**串行收集器在新生代和老年代的并行化**。
+
+并行收集器旨在用于具有在多处理器或多线程硬件上运行的中型到大型数据集的应用程序。
 
 它重点关注的是:
 可控制的吞吐量(**Thoughput=运行用户代码时间/(运行用户代码时间+垃圾收集时间),也即比如程序运行100分钟，垃圾收集时间1分钟，吞吐量就是99%**)。高吞吐量意味若高效利用CPU的时间，它多用于在后台运算而不需要太多交互的任务。
 **自适应调节策略也是ParallelScavenge收集器与ParNew收集器的一个重要区别**。**自适应调节策略**:虚拟机会根据当前系统的运行情况收集性能监控信息，动态调整这些参数以提供最合适的停顿时间(-XX:MaxGCPauseMilis)或最大的吞吐量。
 
-**JVM参数**: -XX:+UseParallelGC或-XX:+UseParallelOldGC(可互相激活)使用Parallel Scanvenge收集器
+**JVM参数**: -XX:+UseParallelGC或-XX:+UseParallelOldGC(可互相激活)使用Parallel Scanvenge收集器。
 
-### 20.4 CMS(并发垃圾回收器)
+并行压缩是使并行收集器能够并行执行主要收集的功能。如果没有并行压缩，则使用单个线程执行主要集合，这会大大限制可伸缩性。如果`-XX:+UseParallelGC`指定了该选项，则默认情况下启用并行压缩。您可以使用` -XX:-UseParallelOldGC `选项禁用它。
 
-**用户线程和垃圾收集线程同时执行**(不一定是并行， 可能**交替执行)**，不需要停顿用户线程互联网公司多用它，适用对响应时间有要求的场景。
+### 20.4 CMS(并发垃圾收集器)
+
+![](D:%5Cgithub%5Cpengmengsheng.github.io%5Cinterview%5Cjava-interview%5Cimg%5CCMSGC.jpg)
+
+**用户线程和垃圾收集线程同时执行**(不一定是并行， 可能**交替执行)**，此收集器用于那些希望较短暂停的垃圾收集并能与垃圾收集共享处理器资源的应用程序。
+
+如果在垃圾收集中花费了总时间的98％以上，而回收不到2％的堆，则抛出OutOfMemoryError 。
+
+从JDK 9开始不推荐使用CMS收集器。推荐使用G1垃圾收集器
 
 -XX:+UseConcMarkSweepGC
-
-
 
 ###  20.5 Serial Old(MSC)
 
@@ -771,11 +805,44 @@ Parallel Scavenge收集器类似ParNew也是一个新生代垃圾收集器，使
 
 -XX:+UseParallelOldGC 
 
-### 20.4 G1垃圾回收器
+### 20.7 G1垃圾收集器
 
-G1垃圾回收器**将堆内存分割成不同的区域然后并发的对其进行垃圾回收**
+![](D:%5Cgithub%5Cpengmengsheng.github.io%5Cinterview%5Cjava-interview%5Cimg%5CG1.jpg)
+
+G1垃圾收集器**将堆内存分割成不同的区域然后并发的对其进行垃圾回收**。垃圾回收主要集中在新生代，老年代偶尔进行。
+
+Garbage-First（G1）垃圾收集器的目标是具有大量内存的多处理器计算机。它尝试以极高的可能性满足垃圾收集暂停时间目标，同时几乎不需要配置即可实现高吞吐量。G1的目标是使用当前的目标应用程序和环境在延迟和吞吐量之间达到最佳平衡，其特点包括：
+
+- 堆大小最大为数十GB或更大，其中超过50％的Java堆占用实时数据。
+- 对象分配和升级的速率可能会随时间而显着变化。
+- 堆中有大量碎片。
+- 可预测的暂停时间目标目标不超过几百毫秒，避免了长时间的垃圾收集暂停。
+
+G1取代了并发标记扫描（CMS）收集器。从jdk9开始它也是默认的收集器
 
 -XX:+UseG1GC
+
+G1与其他收集器主要区别：
+
+- 并行GC只能从整体上压缩和回收旧一代中的空间。G1将这项工作逐步分配到多个较短的馆藏中。这大大缩短了暂停时间，但潜在地增加了吞吐量。
+- 与CMS类似，G1同时执行部分旧空间回收。但是，CMS无法对旧堆进行碎片整理，最终会遇到较长的Full GC。
+- G1可能比上述收集器显示更高的开销，由于并发性而影响吞吐量。
+- ZGC针对非常大的堆，旨在以更短的吞吐量成本提供显着更短的暂停时间。
+
+由于其工作方式，G1具有一些独特的机制来提高垃圾收集效率：
+
+- G1可以在任何收集期间回收一些旧的完全空的，较大的区域。这样可以避免许多其他不必要的垃圾收集，而无需付出很多努力即可释放大量空间。
+- G1可以选择尝试同时对Java堆上的重复字符串进行重复数据删除。
+
+### 20.8 ZGC垃圾收集器
+
+Z垃圾收集器（ZGC）是可伸缩的低延迟垃圾收集器。ZGC同时执行所有昂贵的工作，而不会停止执行应用程序线程。
+
+ZGC适用于要求低延迟（少于10毫秒的暂停）或使用非常大的堆（数TB）的应用程序。
+
+-XX:+UseZGC
+
+从JDK 11开始，ZGC作为实验功能可用。
 
 **YoungGC**:
 
@@ -797,9 +864,23 @@ G1垃圾回收器**将堆内存分割成不同的区域然后并发的对其进�
 
 <img src="C:\Users\user\AppData\Roaming\Typora\typora-user-images\image-20200118163622075.png" alt="image-20200118163622075" style="zoom:50%;" />
 
+### 20.9 收集器的选择
 
+除非您的应用程序有非常严格的暂停时间要求，否则请先运行您的应用程序选择收集器。
 
+如有必要，请调整堆大小以提高性能。如果性能仍然不能满足您的目标，请使用以下准则作为选择收集器的起点：
 
+- 如果应用程序的数据集较小（最大约100 MB），则选择带有选项的串行收集器`-XX:+UseSerialGC`。
+- 如果应用程序将在单个处理器上运行，并且没有暂停时间要求，则选择带有选项的串行收集器`-XX:+UseSerialGC`。
+- 如果（a）峰值应用性能是第一要务，并且（b）没有暂停时间要求，或者可接受一秒或更长时间的暂停，则让VM选择收集器或使用选择并行收集器`-XX:+UseParallelGC`。
+- 如果响应时间比整体吞吐量更重要，并且必须将垃圾收集暂停时间保持在大约一秒钟以内，那么请使用`-XX:+UseG1GC`或选择一个主要是并发的收集器`-XX:+UseConcMarkSweepGC`。
+- 如果响应时间是高优先级，和/或您使用的堆非常大，请使用选择一个完全并发的收集器`-XX:UseZGC`。
+
+这些准则仅提供选择收集器的起点，因为性能取决于堆的大小，应用程序维护的实时数据量以及可用处理器的数量和速度。
+
+如果推荐的收集器没有达到期望的性能，则首先尝试调整堆和生成大小以达到期望的目标。如果性能仍然不足，请尝试使用其他收集器：使用并发收集器来减少暂停时间，并使用并行收集器来增加多处理器硬件上的总体吞吐量。
+
+参考：[HotSpot Virtual Machine Garbage Collection Tuning Guide](https://docs.oracle.com/en/java/javase/12/gctuning,"HotSpot "Virtual Machine Garbage Collection Tuning Guide")
 
 
 
