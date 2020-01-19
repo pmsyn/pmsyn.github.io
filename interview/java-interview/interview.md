@@ -2,6 +2,9 @@
 typora-root-url: img
 ---
 
+[TOC]
+
+
 
 # 常见知识点
 
@@ -434,7 +437,7 @@ IO 密集型时，大部分线程都阻塞，故需要多配置线程数：
 
 比如 8 核 CPU： 8/1-0.9 = 80 个线程数
 
-参考：[https：//blog.csdn.net/youanyyou/article/details/78990156](https：//blog.csdn.net/youanyyou/article/details/78990156)
+参考：[https：//blog.csdn.net/youanyyou/article/details/78990156](https：//blog.csdn.net/youanyyou/article/details/78990156 "")
 
 ## 14.死锁
 ### 14.1原因
@@ -704,11 +707,12 @@ System.out.println("初始JVM最大内存："+VM.maxDirectMemory());
 ByteBuffer byteBuffer = ByteBuffer.allocateDirect(10*1024*1024);//10m
 ```
 结果：  
-[GC (Allocation Failure) [PSYoungGen: 1024K->488K(1536K)] 1024K->592K(5632K), 0.0007910 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]  
+```[GC (Allocation Failure) [PSYoungGen: 1024K->488K(1536K)] 1024K->592K(5632K), 0.0007910 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]  
 初始JVM最大内存：5242880  
 [GC (System.gc()) [PSYoungGen: 1313K->488K(1536K)] 1417K->688K(5632K), 0.0008659 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]  
-[Full GC (System.gc()) [PSYoungGen: 488K->0K(1536K)] [ParOldGen: 200K->635K(4096K)] 688K->635K(5632K), [**Metaspace: 3424K->3424K**(1056768K)], 0.0056662 secs] [Times: user=0.00 sys=0.00, real=0.01 secs]  
+[Full GC (System.gc()) [PSYoungGen: 488K->0K(1536K)] [ParOldGen: 200K->635K(4096K)] 688K->635K(5632K), [Metaspace: 3424K->3424K(1056768K)], 0.0056662 secs] [Times: user=0.00 sys=0.00, real=0.01 secs]  
 Exception in thread "main" java.lang.OutOfMemoryError: Direct buffer memory
+```
 
 #### 19.2.3 java.lang.OutOfMemoryError：unable to create new native thread  
 
@@ -793,13 +797,27 @@ GC算法（引用计数/复制/标记清除/标记整理）是内存回收的方
 
 如果在垃圾收集中花费了总时间的98％以上，而回收不到2％的堆，则抛出OutOfMemoryError 。
 
-从JDK 9开始不推荐使用CMS收集器。推荐使用G1垃圾收集器
+**从JDK 9开始不推荐使用CMS收集器。推荐使用G1垃圾收集器**
 
 -XX:+UseConcMarkSweepGC
 
 ###  20.5 Serial Old(MSC)
 
+**SerialOld是Serial垃圾收集器老年代版本**，它同样是个单线程的收集器，使用标记-整理算法，这个收集器也主要是运行在Client默认的java虚拟机默认的年老代垃圾收集器。
+在Server模式下，主要有两个用途:
 
+1. 在JDK1.5之 前版本中与新生代的Parallel Scavenge收集器搭配使用。(Parallel Scavenge + Serial Old )
+
+2. 作为老年代版中使用CMS收集器的后备垃圾收集方案。
+
+   **Jdk8后已弃用**
+
+   ```verilog
+   Error: Could not create the Java Virtual Machine.
+   Error: A fatal exception has occurred. Program will exit.
+   Unrecognized VM option 'UseSerialOldGC'
+   Did you mean '(+/-)UseSerialGC'?
+   ```
 
 ### 20.6 ParallelOldGC
 
@@ -807,32 +825,42 @@ GC算法（引用计数/复制/标记清除/标记整理）是内存回收的方
 
 ### 20.7 G1垃圾收集器
 
+G1垃圾收集器**将堆内存分割成不同的区域然后并发的对其进行垃圾回收**。
+
 ![](D:%5Cgithub%5Cpengmengsheng.github.io%5Cinterview%5Cjava-interview%5Cimg%5CG1.jpg)
 
-G1垃圾收集器**将堆内存分割成不同的区域然后并发的对其进行垃圾回收**。垃圾回收主要集中在新生代，老年代偶尔进行。
+![img](/G1%E5%8C%BA%E5%9F%9F)
 
-Garbage-First（G1）垃圾收集器的目标是具有大量内存的多处理器计算机。它尝试以极高的可能性满足垃圾收集暂停时间目标，同时几乎不需要配置即可实现高吞吐量。G1的目标是使用当前的目标应用程序和环境在延迟和吞吐量之间达到最佳平衡，其特点包括：
+Garbage-First（G1）垃圾收集器的目标是具有大量内存的多处理器计算机。它减少垃圾收集暂停时间，同时几乎不需要配置即可实现高吞吐量。G1的目标是使当前的目标应用程序和环境在延迟和吞吐量之间达到最佳平衡，其特点包括：
 
 - 堆大小最大为数十GB或更大，其中超过50％的Java堆占用实时数据。
 - 对象分配和升级的速率可能会随时间而显着变化。
-- 堆中有大量碎片。
-- 可预测的暂停时间目标目标不超过几百毫秒，避免了长时间的垃圾收集暂停。
+- 可预测的暂停时间不超过几百毫秒，避免了长时间的垃圾收集暂停。
 
-G1取代了并发标记扫描（CMS）收集器。从jdk9开始它也是默认的收集器
+G1取代了并发标记扫描（CMS）收集器。作为jdk9的默认收集器
 
 -XX:+UseG1GC
 
 G1与其他收集器主要区别：
 
-- 并行GC只能从整体上压缩和回收旧一代中的空间。G1将这项工作逐步分配到多个较短的馆藏中。这大大缩短了暂停时间，但潜在地增加了吞吐量。
-- 与CMS类似，G1同时执行部分旧空间回收。但是，CMS无法对旧堆进行碎片整理，最终会遇到较长的Full GC。
-- G1可能比上述收集器显示更高的开销，由于并发性而影响吞吐量。
-- ZGC针对非常大的堆，旨在以更短的吞吐量成本提供显着更短的暂停时间。
+- 并行GC只能从整体上压缩和回收旧一代中的空间。G1将这项工作逐步分配到多个较短的集合中。这大大缩短暂停时间吞吐量的潜在开销。
+- 与CMS类似，G1并发执行部分旧空间回收。然而，CMS无法对旧堆进行碎片整理，最终会遇到较长的Full GC。
+- 由于并发性吞吐量的影响，G1可能比其他收集器需要更高的开销。
 
 由于其工作方式，G1具有一些独特的机制来提高垃圾收集效率：
 
 - G1可以在任何收集期间回收一些旧的完全空的，较大的区域。这样可以避免许多其他不必要的垃圾收集，而无需付出很多努力即可释放大量空间。
+
 - G1可以选择尝试同时对Java堆上的重复字符串进行重复数据删除。
+
+常用参数：
+
+* -XX:+UseG1GC
+* -XX:G1HeapRegionSize=n:设置的G1区域的大小。值是2的幂，范围是1MB到32MB。目标是根据最小的Java堆大小划分出region区域
+* -XX:MxGCPauseMillis=n:最大GC停顿时间，这是个软目标，JVM将尽可能(但不保证)停顿小于这个时间
+* -XX:nitiatingHeapOccupancyPercent=n:堆占用了多少的时候就触发GC，默认为45
+* -XX:ConcGCThreads=n: 并发GC使用的线程数
+* -XX:G1ReservePercenten: 设置作为空闲空间的预留内存百分比，以降低目标空间溢出的风险，默认值是10%
 
 ### 20.8 ZGC垃圾收集器
 
@@ -846,23 +874,24 @@ ZGC适用于要求低延迟（少于10毫秒的暂停）或使用非常大的堆
 
 **YoungGC**:
 
-​		Serial;
+1. Serial;
 
-​		Parallel Scavenge;
+2. Parallel Scavenge;
 
-​		ParNew;
+3.  ParNew;
+
 
 **Old Gen** : 
 
-​		Serial Old( MSC)；
+1. Serial Old( MSC)；
 
-​		Parallel Old；
+2. Parallel Old；
 
-​		CMS;
+3. CMS;
 
 **G1**:不在区分Young和Old区
 
-<img src="C:\Users\user\AppData\Roaming\Typora\typora-user-images\image-20200118163622075.png" alt="image-20200118163622075" style="zoom:50%;" />
+<img src="/GC.jpg" style="zoom:80%;" />
 
 ### 20.9 收集器的选择
 
@@ -874,15 +903,40 @@ ZGC适用于要求低延迟（少于10毫秒的暂停）或使用非常大的堆
 - 如果应用程序将在单个处理器上运行，并且没有暂停时间要求，则选择带有选项的串行收集器`-XX:+UseSerialGC`。
 - 如果（a）峰值应用性能是第一要务，并且（b）没有暂停时间要求，或者可接受一秒或更长时间的暂停，则让VM选择收集器或使用选择并行收集器`-XX:+UseParallelGC`。
 - 如果响应时间比整体吞吐量更重要，并且必须将垃圾收集暂停时间保持在大约一秒钟以内，那么请使用`-XX:+UseG1GC`或选择一个主要是并发的收集器`-XX:+UseConcMarkSweepGC`。
-- 如果响应时间是高优先级，和/或您使用的堆非常大，请使用选择一个完全并发的收集器`-XX:UseZGC`。
+- 如果响应时间是高优先级或您使用的堆非常大，请使用选择一个完全并发的收集器`-XX:UseZGC`。
 
 这些准则仅提供选择收集器的起点，因为性能取决于堆的大小，应用程序维护的实时数据量以及可用处理器的数量和速度。
 
 如果推荐的收集器没有达到期望的性能，则首先尝试调整堆和生成大小以达到期望的目标。如果性能仍然不足，请尝试使用其他收集器：使用并发收集器来减少暂停时间，并使用并行收集器来增加多处理器硬件上的总体吞吐量。
 
+<table>
+<tr>
+<th> 参数</th><th>新生代收集器 </th><th> 新生代算法</th><th> 老年代收集器</th><th>老年代算法</th>
+</tr>
+<tr>
+    <td> -XX:+UseSerialGC </td><td>SerialGC</td><td width="120px">复制</td><td>SerialOldGC</td><td>标整</td> 
+</tr>
+<tr>
+    <td>-XX:+UseParNewGC</td><td>ParNewGC</td><td>复制</td><td>SerialOldGC</td><td>标整</td>
+</tr>
+<tr>
+    <td>-XX:+UseParellelGC/-XX:+UseParellelGC</td><td> ParellelGC</td><td>复制</td><td>ParellelOldGC</td><td>标整</td>
+</tr>
+<tr>
+<td>-XX:+UseConcMarkSweepGC</td><td>ParNewGC</td><td>复制</td><td>SerialOldGC</td><td>标清 </td>
+</tr>
+<tr>
+    <td>-XX:+UseG1GC</td><td>G1GC</td><td colspan=3>整体采用标记整理，局部使用复制算法，不会产生内存碎片</td> </tr>
+</table>
+
+
+
+
+
+
+
+
 参考：[HotSpot Virtual Machine Garbage Collection Tuning Guide](https://docs.oracle.com/en/java/javase/12/gctuning,"HotSpot "Virtual Machine Garbage Collection Tuning Guide")
-
-
 
 
 
