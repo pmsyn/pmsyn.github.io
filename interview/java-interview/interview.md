@@ -762,7 +762,7 @@ GC算法（引用计数/复制/标记清除/标记整理）是内存回收的方
 开启后默认使用：Serial（Young区） + Serial Old（Old区）
 新生代使用复制算法，老年代使用标记-整理算法
 
-### 20.2 ParNew（并行垃圾收集器）
+### 20.2 ParNew并行垃圾收集器）
 
 使用多线程进行垃圾回收，在垃圾收集时，会Stop-the-World暂停其他所有的工作线程直到它收集结束。
 
@@ -797,9 +797,9 @@ GC算法（引用计数/复制/标记清除/标记整理）是内存回收的方
 
 如果在垃圾收集中花费了总时间的98％以上，而回收不到2％的堆，则抛出OutOfMemoryError 。
 
-**从JDK 9开始不推荐使用CMS收集器。推荐使用G1垃圾收集器**
-
 -XX:+UseConcMarkSweepGC
+
+**从JDK 9开始不推荐使用CMS收集器。推荐使用G1垃圾收集器**
 
 ###  20.5 Serial Old(MSC)
 
@@ -930,22 +930,136 @@ ZGC适用于要求低延迟（少于10毫秒的暂停）或使用非常大的堆
 </table>
 
 
-
-
-
-
-
-
 参考：[HotSpot Virtual Machine Garbage Collection Tuning Guide](https://docs.oracle.com/en/java/javase/12/gctuning,"HotSpot "Virtual Machine Garbage Collection Tuning Guide")
 
+## 21.Linux服务器性能查看命令：
+
+### 21.1 整机: top
+
+### 21.2 CPU: vmstat
+
+vmstat-n 23
+
+一般vmstat工具的使用是通过两个数字参数来完成的，第一个参 数是采样的时间间隔数单位是秒，第:二个参数是采样的次数
+
+  - **procs**
+    ● r:运行和等待CPU时间片的进程数，原则上1核的CPU的运行队列不要超过2，整个系统的运行队列不能超过总核数的2倍,  否则代表系统压力过大
+  ● b:等待资源的进程数，比如正在等待磁盘I/0、 网络I/0等。
+
+- **cpu**
+  
+    ● us:
+    用户进程消耗CPU时间百分比，us值高，用户进程消耗CPU时间多，如果长期大于50%，优化程序;
+  ● sy:内核进程消耗的CPU时间百分比;
+  
+  ● us + sy参考值为80%，如果us + sy大于80%，说明可能存在CPU不足。
+  
+    id:处于空闲的CPU百分比
+    wa: 系统等行I0的CPU时间百分比
+    st:来自于一个虚拟机偷取的CPU时间的百分比
+  
+  **查看所有cpu核信息：mpstat -P ALLj2** 
+  **每个进程使用cpu的用量分解信息：pidstat-u1 -p进程编号**
+  
+  ### 21.3 内存: free
+  
+  ### 21.4 硬盘: df
+  
+  ### 21.5  磁盘: iostat
+  
+  ### 21.6 网络: ifstat
+
+## 22. CPU占用过高的思路分析和定位
+
+   1.先用top命令找出CPU占比最高的进程
+
+2. ps -ef或者jps进一步定位，找到后台程序
+
+3. **定位到具体线程或者代码**
+
+  ps -mp 进程 -o THREAD,tid,time
+  参数解释：
+  -m ：显示所有的线程
+  -p：pid进程使用cpu的时间
+  -o：该参数后是用户自定义格式
+
+4. 将需要的**线程ID**转换为16进制格式(英文小写格式)
+
+  printf "%x\n"有问题的线程ID
+
+5. jstack进程ID | grep tid(16进制线程ID小写英文) -A60
+
+## 23. JDK自带的JVM监控和性能分析工具
+
+调试+排查+检索
 
 
 
+## 24.Github使用
+
+### 24.1 常用名词：
+
+watch:会持续收到该项目的动态
+fork，复制某个项目到自己的Github仓库中
+star，可以理解为点赞
+clone，将项目下载至本地
+follow，关注你感兴趣的作者，会收到他们的动态.
+
+### 24.2 关键词
+
+#### 24.2.1 in限制搜索范围
+
+公式：xxx关键词in:name或description或readme
+
+xxx in:name项目名包含xx的
+xxx in:description项目描述包含xx的
+xxx in:readme项目的readme文件中包含xx的
+
+组合使用：xxx in:name,description,readme
+
+#### 24.2.2 stars或fork数量关键词查找
+
+公式：
+
+1. xxx关键词 starts 通配符（:>或:>=）
+
+2. 区间范围数字 数字1到数字2 (数字1..数字2)
+
+例如：
+
+1. springboot stars:>=5000
+2. springboot stars:5000..10000
+3. springcloud fork:>=1000
+
+组合使用：springboot stars:5000..10000 fork 1000..10000
+
+### 24.3 awesome加强搜索
+
+一般是用来收集学习、 工具、 书籍类相关的项目
+
+公式：awesome+关键词
+
+### 24.4 高亮显示关键代码行数
+
+		1. 指定一行：java路径+#L行号
+  		2. 多行：java路径+#L行号1-L行号2
+
+### 24.5 项目内搜索
+
+在项目下输入 t
+
+### 24.6搜索某个地区内的用户
+
+location:beijing language:java
+
+### 24.7 使用文档
+
+Github使用文档：[Github使用文档](https://help.github.com/en/github/getting-started-with-github "https://help.github.com/en/github/getting-started-with-github")
+
+Git教程：[Git教程-廖雪峰官网](https://www.liaoxuefeng.com/wiki/896043488029600 "https://www.liaoxuefeng.com/wiki/896043488029600") 
+
+​				[https://help.github.com/cn/github/using-git](https://help.github.com/cn/github/using-git "https://help.github.com/cn/github/using-git")
 
 
-
-
-
-
-写作规范参考：[《中文技术文档的写作规范》](https：//github.com/ruanyf/document-style-guide "中文技术文档的写作规范")
+写作规范参考：[《中文技术文档的写作规范》](https：//github.com/ruanyf/document-style-guide "https：//github.com/ruanyf/document-style-guide")
 
