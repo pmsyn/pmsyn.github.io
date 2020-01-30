@@ -4,8 +4,7 @@ typorarooturl: img
 
 [TOC]
 
-# 常见知识点
-
+ <h1 style="text-align:center;">常见知识点</h1>
 ## 1. Volatile
 
 Java虚拟机提供的轻量级同步机制（synchronize）
