@@ -7,11 +7,14 @@ typorarooturl: img
  <h1 style="text-align:center;">常见知识点</h1>
 ## 1. Volatile
 
-Java虚拟机提供的轻量级同步机制（synchronize）
+Java虚拟机提供的轻量级同步机制（synchronize），当多个线程操作共享数据时可保证内存中数据**可见**，
 **特性**：
 
-1. **保证可见性**
-2. **不保证原子性**
+1. 内存**可见性**
+
+   内存可见性：当多个线程操作共享数据时，内存中数据彼此可见。
+
+2. 不保证**原子性**
 
 3. **禁止指令重排（有序性）**
 
@@ -1079,7 +1082,7 @@ xxx in:readme项目的readme文件中包含xx的
 
 在项目下输入 t
 
-### 24.6搜索某个地区内的用户
+### 24.6 搜索某个地区内的用户
 
 location:beijing language:java
 
@@ -1089,10 +1092,482 @@ location:beijing language:java
 
 Github使用文档：[Github使用文档](https://help.github.com/en/github/gettingstartedwithgithub "https://help.github.com/en/github/gettingstartedwithgithub")
 
-Git教程：[Git教程廖雪峰官网](https://www.liaoxuefeng.com/wiki/896043488029600 "https://www.liaoxuefeng.com/wiki/896043488029600") 
+Git教程：[Git教程廖雪峰官网](https://www.liaoxuefeng.com/wiki/896043488029600 "https://www.liaoxuefeng.com/wiki/896043488029600") 				[https://help.github.com/cn/github/usinggit](https://help.github.com/cn/github/usinggit "https://help.github.com/cn/github/usinggit")
 
-​				[https://help.github.com/cn/github/usinggit](https://help.github.com/cn/github/usinggit "https://help.github.com/cn/github/usinggit")
+## 25 NIO
 
+ Java NIO (New IO Non Blocking IO) 是从Java 1.4版本开始引入的一-个新的IO API，可以替代标准的Java IO API。NIO与原来的IO有同样的作用和目的，但是使用的方式完全不同，**NIO支持面向缓冲区的、基于通道的I0操作**。NIO将以更加高效的方式进行文件的读写操作。
+
+IO与NIO区别：
+
+| IO                        | NIO                           |
+| ------------------------- | ----------------------------- |
+| 面向流（Stream Oriented） | 面向缓冲区（Buffer Oriented） |
+| 阻塞IO（Blocking IO）     | 非阻塞IO（Non Blocking IO）   |
+| 无                        | 选择器（Selectors）           |
+
+### 25.1 通道和缓冲区
+
+Java NIO系统的核心在于:通道(Channel)和缓冲区(Buffer)。通道表示打开到I0设备(例如:文件、套接字)的连接。若需要使用NIO系统，需要获取用于连接I0设备的通道以及用于容纳数据的缓冲区。然后操作缓冲区，对数据进行处理。
+
+**Channel 负责传输，Buffer 负责存储**
+
+#### 25.1.1 缓冲区(Buffer)
+
+在Java NIO中负责数据的存取。缓冲区就是数组。用于存储不同数据类型的数据。
+
+根据数据类型（除了Boolean）的不同，提供了相应的缓冲区。管理方式基本一致，通过allocate()获取缓冲区。
+
+```java
+ByteBuffer
+CharBuffer
+LongBuffer
+FloatBuffer
+ShortBuffer
+IntBuffer
+DoubleBuffer
+```
+
+#### 25.1.2 核心方法：
+
+put():存入数据到缓冲区；
+
+get():从缓冲区取数据。
+
+#### 25.1.3 核心参数：
+
+```java
+private int mark = -1;//标记，记录当前position位置，可以通过reset()恢复到mark位置
+private int position = 0;//位置，缓冲区正在操作数据的位置
+private int limit;//界限，缓冲区中可以操作数据的大小，limit后面的数据不能进行读取
+private int capacity;//容量，表示缓冲区最大存储数据的容量，一旦声明不能改变。
+//mark <= position <= limit <= capacity
+```
+
+```java
+public static void main(String[] args) {
+    //1.分配缓冲区大小
+    ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+    System.out.println("--------init--------");
+    System.out.println(byteBuffer.mark());
+    System.out.println("--------put--------");
+    String str = "abcde";
+    //2.写数据
+    byteBuffer.put(str.getBytes());
+    System.out.println(byteBuffer.mark());
+    //3.切换到读数据模式
+    System.out.println("--------flip--------");
+    byteBuffer.flip();
+    System.out.println(byteBuffer.mark());
+    //4.读取缓冲区数据
+    byte[] dst = new byte[byteBuffer.limit()];
+    System.out.println("--------get--------");
+    byteBuffer.get(dst);
+    System.out.println(byteBuffer.mark());
+    System.out.println(new String(dst,0,dst.length));
+    //5.rewind:可重复读数据
+    System.out.println("--------rewind--------");
+    byteBuffer.rewind();
+    System.out.println(byteBuffer.mark());
+    //6. clear：清空缓冲区，但是数据还存在，数据处于被遗忘状态
+    System.out.println("--------clear--------");
+    //hasRemaining：判断缓冲区是否还有数据
+    if(byteBuffer.hasRemaining()){
+        System.out.println(byteBuffer.remaining());
+    }
+}
+
+/**
+运行结果：
+--------init--------
+java.nio.HeapByteBuffer[pos=0 lim=1024 cap=1024]
+--------put--------
+java.nio.HeapByteBuffer[pos=5 lim=1024 cap=1024]
+--------flip--------
+java.nio.HeapByteBuffer[pos=0 lim=5 cap=1024]
+--------get--------
+java.nio.HeapByteBuffer[pos=5 lim=5 cap=1024]
+abcde
+--------rewind--------
+java.nio.HeapByteBuffer[pos=0 lim=5 cap=1024]
+--------clear--------
+java.nio.HeapByteBuffer[pos=0 lim=5 cap=1024]
+
+**/
+```
+
+#### 25.1.4 直接缓冲区和非直接缓冲区
+
+**非直接缓冲区**：allocate()方法分配缓冲区，缓冲区建立在JVM的内存中。
+
+**处理过程**：物理磁盘—>内核地址空间（缓存）—>用户地址空间（缓存）—>应用程序
+
+**直接缓冲区**：通过调用此类的allocateDirect()厂方法来创建。此方法返回的**缓冲区进行分配和取消**
+**分配所需成本通常高于非直接缓冲区**。直接缓冲区的内容可以驻留在常规的垃圾回收堆之外，因此，它们对
+应用程序的内存需求量造成的影响可能并不明显。所以，建议将直接缓冲区主要分配给那些易受基础系统的
+本机I/0操作影响的大型、持久的缓冲区。-般情况下，最好仅在直接缓冲区能在程序性能方面带来明显好
+处时分配它们。
+直接字节缓冲区还可以通过**FileChannel的map()方法**将文件区域直接映射到内存中来创建。该方法返回
+**MappedByteBuffer**。Java平台的实现有助于通过JNI从本机代码创建直接字节缓冲区。如果以上这些缓冲区
+中的某个缓冲区实例指的是不可访问的内存区域，则试图访间该区域不会更改该缓冲区的内容，并且将会在
+访问期间或稍后的某个时间导致抛出不确定的异常。
+
+**处理过程**：物理磁盘—>物理内存映射文件—>应用程序
+
+<img src="img/%E7%BC%93%E5%86%B2%E5%8C%BA.jpg" style="zoom:60%;" />
+
+### 25.2 通道（Channel）
+
+**通道（Channel）** :用于IO源与目标节点的连接。Channel类似于传统的“流”。在Java NIO中负责缓冲区中数据的传输，Channel本身不能直接访问数据，Channel 只能配合缓冲区进行数据传输。
+
+![](img/%E9%80%9A%E9%81%93.jpg)
+
+DMA（直接存储器）—>Channel（通道）
+
+#### 25.2.1 主要实现类
+
+```JAVA
+FileChannel
+SocketChannel
+ServerSocketChannel
+DatagramChannel    
+```
+
+#### 25.2.2 获取通道
+
+1. 支持通道的类提供的getChannel()方法
+
+   ```java
+   //本地IO
+   FileInputStream
+   FileOutputStream
+   RandomAccessFile
+   //网络IO
+   Socket
+   ServerSocket
+   DatagramSocket
+   
+   ```
+
+2. 在JDK1.7中的NIO2针对各个通道提供静态方法 open()方法
+
+3. 在JDK1.7中的NIO2的Files工具类中的Files.newByteChannel()方法
+
+#### 25.2.3 文件操作
+
+* 利用通道进行数据读写：
+
+  ```java
+  public void copyFile() throws Exception {
+      FileInputStream fileInputStream = new FileInputStream("1.txt");
+      FileOutputStream fileOutputStream = new FileOutputStream("2.txt");
+      //1.获取通道
+      FileChannel inputChnanel = fileInputStream.getChannel();
+      FileChannel outChannel = fileOutputStream.getChannel();
+      //2.分配缓冲区
+      ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+      //3.将数据读到缓冲区
+      while (inputChnanel.read(byteBuffer) != -1) {
+          byteBuffer.flip();
+          //4.将数据写入缓冲区
+          outChannel.write(byteBuffer);
+          //清空缓冲区
+          byteBuffer.clear();
+      }
+      inputChnanel.close();
+      outChannel.close();
+      fileOutputStream.close();
+      fileInputStream.close();
+  }
+  ```
+
+* 利用直接缓冲区对文件操作：
+
+  ```java
+  public void copyFile() throws Exception {
+      FileChannel inChannel = FileChannel.open(Paths.get("1.txt"), StandardOpenOption.READ);
+      FileChannel outChannel = FileChannel.open(Paths.get("1.txt"), StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ);
+      //直接缓冲区
+      MappedByteBuffer inBuf = inChannel.map(FileChannel.MapMode.READ_ONLY, 0, inChannel.size());
+      MappedByteBuffer outBuf = outChannel.map(FileChannel.MapMode.READ_WRITE, 0, inChannel.size());
+      //直接对缓冲区进行数据的操作
+      outBuf.put(inBuf);
+      //关闭通道
+      outChannel.close();
+      inChannel.close();
+  }
+  ```
+
+#### 25.2.4 通道之间的数据传输
+
+```
+transferTo();
+transferFrom();
+```
+
+```java
+FileChannel inChannel = FileChannel.open(Paths.get("1.txt"), StandardOpenOption.READ);
+FileChannel outChannel = FileChannel.open(Paths.get(""), StandardOpenOption.WRITE);
+//inChannel.transferTo(0,inChannel.size(),outChannel);
+outChannel.transferFrom(inChannel,0,inChannel.size());
+outChannel.close();
+inChannel.close();
+```
+
+#### 25.2.5 分散（Scatter）于聚集（Gather）
+
+**分散读取**：将通道（Channel）中的数据按顺序分散到多个缓冲区（Buffer）中；
+
+**聚集写入**：将多个缓冲区（Buffer）中数据按顺序聚集到通道（Channel）中；
+
+```java
+RandomAccessFile raf1 = new RandomAccessFile("1.txt", "rw");
+//1.获取通道
+FileChannel channel = raf1.getChannel();
+//2.分散到指定大小的缓冲区
+ByteBuffer buffer1 = ByteBuffer.allocate(1024);
+ByteBuffer buffer2 = ByteBuffer.allocate(1024);
+//3.分散读取
+ByteBuffer[] byteBuffers = {buffer1, buffer2};
+channel.read(byteBuffers);
+for (ByteBuffer byteBuffer : byteBuffers) {
+    byteBuffer.flip();
+}
+//4.聚集写入
+RandomAccessFile raf2 = new RandomAccessFile("2.txt", "rw");
+FileChannel channel2 = raf2.getChannel();
+channel2.write(byteBuffers);
+```
+
+#### 25.2.6 编码解码
+
+```java
+Charset charset=Charset.forName("GBK");
+CharsetEncoder encoder = charset.newEncoder();
+CharsetDecoder decoder = charset.newDecoder();
+
+CharBuffer encodeBuffer = CharBuffer.allocate(1024);
+encodeBuffer.put("你好，世界！");
+encodeBuffer.flip();
+//编码
+ByteBuffer encodeChar = encoder.encode(encodeBuffer);
+//解码
+encodeChar.flip();
+CharBuffer decodeBuffer = decoder.decode(encodeChar);
+System.out.println(decodeBuffer.toString());
+```
+
+#### 25.2.7 阻塞与非阻塞
+
+##### 25.2.7.1 选择器(Selector)
+
+是SelectableChannel的多路复用器。用于监控SelectableChannel的IO状况。
+
+* 阻塞模式
+
+```java
+void client() throws Exception {
+    SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress("127.0.0.1", 8081));
+    FileChannel fileChannel = FileChannel.open(Paths.get("1.txt"), StandardOpenOption.READ);
+
+    ByteBuffer buffer = ByteBuffer.allocate(1024);
+    while (fileChannel.read(buffer) != -1) {
+        buffer.flip();
+        socketChannel.write(buffer);
+        buffer.clear();
+    }
+    //接收服务器数据
+    int len = 0;
+    while((len=socketChannel.read(buffer)) != -1) {
+        buffer.flip();
+        System.out.println(new String(buffer.array(),0,len));
+        buffer.clear();
+    }
+    fileChannel.close();
+    socketChannel.close();
+
+}
+
+void server() throws Exception {
+    ServerSocketChannel serverChannel = ServerSocketChannel.open();
+    serverChannel.bind(new InetSocketAddress("127.0.0.1", 8081));
+    SocketChannel socketChannel = serverChannel.accept();
+
+    FileChannel fileChannel = FileChannel.open(Paths.get("2.txt"), StandardOpenOption.WRITE,
+                                               StandardOpenOption.CREATE);
+    ByteBuffer buffer = ByteBuffer.allocate(1024);
+    while (socketChannel.read(buffer) != -1) {
+        buffer.flip();
+        fileChannel.write(buffer);
+        buffer.clear();
+    }
+    //向客户端返回数据
+    buffer.put("服务器接收成功！".getBytes());
+    buffer.flip();
+    socketChannel.write(buffer);
+
+    fileChannel.close();
+    socketChannel.close();
+    serverChannel.close();
+
+}
+```
+* 非阻塞模式
+
+  ```java
+  @Test
+  public void client() throws Exception {
+  	// 1.获取通道
+  	SocketChannel socketChannel = SocketChannel.open(new InetSocketAddress("127.0.0.1", 9099));
+  	// 2.切换成非阻塞模式
+  	socketChannel.configureBlocking(false);
+  
+  	// 3.分配缓冲区
+  	ByteBuffer buffer = ByteBuffer.allocate(1024);
+  	// 4.发送请求
+  	buffer.put("你好".getBytes());
+  	buffer.flip();
+  	socketChannel.write(buffer);
+  	// 关闭通道
+  	socketChannel.close();
+  
+  }
+  
+  @Test
+  public void server() throws Exception {
+  	// 1.获取通道
+  	ServerSocketChannel serverChannel = ServerSocketChannel.open();
+  	// 2.切换非阻塞模式
+  	serverChannel.configureBlocking(false);
+  	// 3.绑定
+  	serverChannel.bind(new InetSocketAddress("127.0.0.1", 9099));
+  	// 4.获取选择器
+  	Selector selector = Selector.open();
+  	// 5.将通道注册到选择器上，指定“监听接收事件”
+  	serverChannel.register(selector, SelectionKey.OP_ACCEPT);
+  	// 6.轮询获取选择器上已经“准备就绪”的事件
+  	while (selector.select() > 0) {
+  		// 7.获取当前选择器中所有注册的“选择键（已就绪的监听事件）”
+  		Iterator<SelectionKey> it = selector.keys().iterator();
+  		while (it.hasNext()) {
+  			// 8.获取准备“就绪”事件
+  			SelectionKey key = it.next();
+  			// 9.判断具体是什么事件就绪
+  			if (key.isAcceptable()) {
+  				// 10.若“接收就绪”，获取客户端的连接
+  				SocketChannel sChannel = serverChannel.accept();
+  				// 11.切换成非阻塞模式
+  				sChannel.configureBlocking(false);
+  				// 12.将通道注册到选择器上
+  				sChannel.register(selector, SelectionKey.OP_READ);
+  
+  			} else if (key.isReadable()) {
+  				// 13.获取读就绪状态的通道
+  				SocketChannel sChannel = (SocketChannel) key.channel();
+  				// 14.读取数据
+  				ByteBuffer buff = ByteBuffer.allocate(1024);
+  				int len = 0;
+  				while ((len = sChannel.read(buff)) > 0) {
+  					buff.flip();
+  					System.out.println(new String(buff.array(), 0, len));
+  					buff.clear();
+  				}
+  			}
+  			// 15.取消选择键
+  			//it.remove();
+  
+  		}
+  	}
+  
+  	serverChannel.close();
+  
+  }
+  ```
+
+* DatagramChannel 发送UDP包的通道
+
+  ```java
+  @Test
+  public void send() throws Exception {
+  	DatagramChannel dc = DatagramChannel.open();
+  	dc.configureBlocking(false);
+  
+  	ByteBuffer buff = ByteBuffer.allocate(1024);
+  
+  	Scanner scanner = new Scanner(System.in);
+  	while (scanner.hasNext()) {
+  		String in = scanner.next();
+  		buff.put((new Date().toString() + ":\t" + in).getBytes());
+  		buff.flip();
+  		dc.send(buff, new InetSocketAddress("127.0.0.1", 8081));
+  		buff.clear();
+  	}
+  	scanner.close();
+  	dc.close();
+  }
+  
+  @Test
+  public void receive() throws Exception {
+  	DatagramChannel dc = DatagramChannel.open();
+  	dc.configureBlocking(false);
+  	dc.bind(new InetSocketAddress(8081));
+  
+  	Selector sc = Selector.open();
+  
+  	dc.register(sc, SelectionKey.OP_READ);
+  
+  	while (sc.select() > 0) {
+  		Iterator<SelectionKey> it = sc.selectedKeys().iterator();
+  		while (it.hasNext()) {
+  			SelectionKey key = it.next();
+  			if (key.isReadable()) {
+  				ByteBuffer buf = ByteBuffer.allocate(1024);
+  				dc.receive(buf);
+  				buf.flip();
+  
+  				System.out.println(new String(buf.array(), 0, buf.limit()));
+  				buf.clear();
+  			}
+  		}
+  		it.remove();
+  	}
+  }
+  ```
+
+##### 25.2.7.2 管道（Pipe）
+
+JavaNIO管道是2个线程之间的单向数据连接。Pipe有一个source通道和一 个sink通道。数据会
+被写到sink通道，从source通 道读取。
+
+```java
+@Test
+public void send() throws Exception {
+    // 1.获取管道
+    Pipe pipe = Pipe.open();
+    // 2.数据写入管道
+    SinkChannel sink = pipe.sink();
+    sink.configureBlocking(false);
+	ByteBuffer buf = ByteBuffer.allocate(1024);
+
+	buf.put("你好".getBytes());
+	buf.flip();
+
+	sink.write(buf);
+	buf.clear();
+	// 3.获取管道中数据
+
+	SourceChannel source = pipe.source();
+
+	int len = 0;
+	while ((len = source.read(buf)) > 0) {
+		buf.flip();
+		System.out.println(new String(buf.array(), 0, len));
+		buf.clear();
+	}
+
+	sink.close();
+}
+```
 
 写作规范参考：[《中文技术文档的写作规范》](https：//github.com/ruanyf/documentstyleguide "https：//github.com/ruanyf/documentstyleguide")
 
