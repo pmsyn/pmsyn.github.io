@@ -506,35 +506,255 @@ class DeadLockDemo implements  Runnable{
 * jstack找到死锁查看
 
 ## 15.JVM
-### 15.1 JVM内存结构
 
 ![](img/JVM%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E6%A6%82%E8%A7%88.jpg)
 
-### 15.2 GC作用域
+### java运行时数据区：
+
+#### 1. 程序计数器（Program Counter Register）
+
+​		程序计数器是一块较小的内存空间，他可以看作是**当前线程**所**执行**的**字节码的行号指示器**。字节码解释器工作时就是通过改变这个计数器的值来选取下一条需要执行的字节码指令，它是程序控制流的指示器，分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。这个内存区域为“**线程私有**”，每条线程都有一个独立的程序计数器。
+
+#### 2. Java虚拟机栈
+
+#### 3. 本地方法栈
+
+#### 4. Java堆
+
+#### 5. 方法区
+
+#### 6.运行时常量池
+
+### 15.1 JVM内存结构
+
+在jdk1.7中分为年轻代、年老代、永久区。
+
+* Young 年轻区（代）
+  Young区被划分为三部分，Eden区和两个大小严格相同的Survivor区，其中，Survivor区间中，某一时刻只有其中一个是被使用的，另外一个留做垃圾收集时复制对象用，在Eden区间变满的时候， GC就会将存活的对象移到空闲的Survivor区间中，根据JVM的策略，在经过几次垃圾收集后，任然存活于Survivor的对象将被移动
+  到Tenured区间。
+* Tenured 年老区
+    Tenured区主要保存生命周期长的对象，一般是一些老的对象，当一些对象在Young复制转移一定的次数以后，对象就会被转移到Tenured区，一般如果系统中用了application级别的缓存，缓存中的对象往往会被转移到这一区间。
+* Perm 永久区
+      Perm代主要保存class,method,filed对象，这部份的空间一般不会溢出，除非一次性 加载了很多的类，不过在涉及到热部署的应用服务器的时候，有时候会遇到 java.lang.OutOfMemoryError : PermGen space 的错误，造成这个错误的很大原因就有可能是每次都重新部署，但是重新部署后，类的class没有被卸载掉，这样就造成了大量的class对象保存在了perm中，这种情况下，一般重新启动应用服务器可以解决问题。
+* Virtual区：
+      最大内存和初始内存的差值，就是Virtual区。
+
+在jdk1.8中 分为年轻代、年老代和元空间：
+
+**Metaspace所占用的内存空间不是在虚拟机内部，而是在本地内存空间中。**
+
+<img src="img/jdk7jvm" alt="image-20200203164142986" style="zoom:80%;" />
+
+<img src="img/jdk8jvm" alt="image-20200203164110586" style="zoom:80%;" />
+
+### 15.2 命令
+
+#### 15.2.1 jstat
+
+对jvm堆的内存进行统计分析
+
+- 查看垃圾回收统计：jstat -gc 进程号
+- 查看class加载统计：jstat ‐class 进程号
+- 查看编译统计：jstat ‐compiler 进程号
+
+#### 15.2.2 jmap
+
+jmap查看堆内存使用详细信息：jmap option 进程号
+
+```
+-heap                to print java heap summary
+-histo[:live]        to print histogram of java object heap; if the "live"
+                         suboption is specified, only count live objects
+-clstats             to print class loader statistics
+-finalizerinfo       to print information on objects awaiting finalization
+-dump:<dump-options> to dump java heap in hprof binary format
+                         dump-options:
+                           live         dump only live objects; if not specified,
+                                        all objects in the heap are dumped.
+                           format=b     binary format
+                           file=<file>  dump heap to <file>
+                         Example: jmap -dump:live,format=b,file=heap.bin <pid>
+    -F                   force. Use with -dump:<dump-options> <pid> or -histo
+                         to force a heap dump or histogram when <pid> does not
+                         respond. The "live" suboption is not supported
+                         in this mode.
+    -h | -help           to print this help message
+    -J<flag>             to pass <flag> directly to the runtime system
+```
+
+#### 15.2.3 jhat
+
+通过jhat对dump文件进行分析
+
+jhat -port 9999 d:/dump.dat
+
+在浏览器中访问http://localhost:9999/
+
+oql查询
+
+```cmd
+ Usage:  jhat [-stack <bool>] [-refs <bool>] [-port <port>] [-baseline <file>] [-debug <int>] [-version] [-h|-help] <file>
+ -J<flag>          Pass <flag> directly to the runtime system. For
+                      example, -J-mx512m to use a maximum heap size of 512MB
+    -stack false:     Turn off tracking object allocation call stack.
+    -refs false:      Turn off tracking of references to objects
+    -port <port>:     Set the port for the HTTP server.  Defaults to 7000
+    -exclude <file>:  Specify a file that lists data members that should
+                      be excluded from the reachableFrom query.
+    -baseline <file>: Specify a baseline object dump.  Objects in
+                      both heap dumps with the same ID and same class will
+                      be marked as not being "new".
+    -debug <int>:     Set debug level.
+                        0:  No debug output
+                        1:  Debug hprof file parsing
+                        2:  Debug hprof file parsing, no server
+    -version          Report version number
+    -h|-help          Print this help and exit
+    <file>            The file to read
+```
+#### 15.2.4 mat 内存分析工具
+
+MAT(Memory Analyzer Tool)，一个基于Eclipse的内存分析工具，是一个快速、功能丰富的JAVA heap分析工具，它可以帮助我们查找内存泄漏和减少内存消耗。使用内存分析工具从众多的对象中进行分析，快速的计算出在内存中对象的占用大小，看看是谁阻止了垃圾收集器的回收工作，并可以通过报表直观的查看到可能造成这种结果的对象。
+
+https://www.eclipse.org/mat/
+
+#### 15.2.5 jstack
+
+有些时候我们需要查看下jvm中的线程执行情况，比如，发现服务器的CPU的负载突然增
+高了、出现了死锁、死循环等，我们该如何分析呢？
+由于程序是正常运行的，没有任何的输出，从日志方面也看不出什么问题，所以就需要
+看下jvm的内部线程的执行情况，然后再进行分析查找出原因。
+这个时候，就需要借助于jstack命令了，jstack的作用是将正在运行的jvm的线程情况进
+行快照，并且打印出来：
+
+```cmd
+Usage:
+    jstack [-l] <pid>
+        (to connect to running process)
+    jstack -F [-m] [-l] <pid>
+        (to connect to a hung process)
+    jstack [-m] [-l] <executable> <core>
+        (to connect to a core file)
+    jstack [-m] [-l] [server_id@]<remote server IP or hostname>
+        (to connect to a remote debug server)
+
+Options:
+    -F  to force a thread dump. Use when jstack <pid> does not respond (process is hung)
+    -m  to print both java and native frames (mixed mode)
+    -l  long listing. Prints additional information about locks
+    -h or -help to print this help message
+```
+
+1. 通过jps查询进程号
+2. 通过jstack查看线程执行情况：jstack 进程号
+
+#### 15.2.6 Java Visual JVM工具的使用
+
+1. 监控本地JVM
+
+2. 监控远程JVM，需要借助JMX技术
+
+   JMX（Java Management Extensions，即Java管理扩展）是一个为应用程序、设备、系统等植入管理功能的框架。JMX可以跨越一系列异构操作系统平台、系统体系结构和网络传输协议，灵活的开发无缝集成的系统、网络和服务管理应用。
+
+   **监控远程tomcat**，就需要在远程的tomcat进行对JMX配置，保存重启：
+
+   ```xml
+   #在tomcat的bin目录下，修改catalina.sh，添加如下的参数
+   JAVA_OPTS="‐Dcom.sun.management.jmxremote ‐
+   Dcom.sun.management.jmxremote.port=9999 ‐
+   Dcom.sun.management.jmxremote.authenticate=false ‐
+   Dcom.sun.management.jmxremote.ssl=false"
+   
+   #‐Dcom.sun.management.jmxremote ：允许使用JMX远程管理
+   #‐Dcom.sun.management.jmxremote.port=9999 ：JMX远程连接端口
+   #‐Dcom.sun.management.jmxremote.authenticate=false ：不进行身份认证，任何用
+   户都可以连接
+   #‐Dcom.sun.management.jmxremote.ssl=false ：不使用ssl
+   ```
+
+   使用VisualJVM连接远程tomcat 添加远程主机：
+
+   
 
 ### 15.3 常见的垃圾回收算法
-* **引用计数**:有对象引用 引用计数加1无引用减1。不常用
+#### 15.3.1 引用计数
 
-* **复制**
+有对象引用 引用计数加1无引用减1。不常用
 
-	MinorGC的过程( 复制>清空>互换)
-	
-	1. eden、 SurvivorFrom 复制到SurvivorTo，年龄+1
-	   首先，当Eden区 满的时候会触发第一次GC,把还活 着的对象拷贝到SurvivorFrom区，当Eden区再次触发GC的时候会扫描Eden区和From区域,对这两个区域进行垃圾回收，经过这次回收后还存活的对象，则直接复制到To区域(如果有对象的年龄已经达到了老年的标准，则赋值到老年代区)，同时把这些对象的年龄+1 。
-	2. 清空eden、SurvivorFrom 然后，清空Eden和SurvivorFrom中的对象，也即复制之后有交换，谁空谁是to 
-	3. SurvivorTo和 SurvivorFrom互换最后，SurvivorTo和SurvivorFrom互 换，原SurvivorTo成 为下一次GC时的SurvivorFrom区。部分对象会在From和To区域中复制来复制去，如此交换15次(由JVM参数MaxTenuringThreshold 决定，这个参数默认是15),最终如果还是存活，就存入到老年代。
-	
-* **标记清除(MarkSweep) **
+假设有一个对象A，任何一个对象对A的引用，那么对象A的引用计数器+1，当引用失败
+时，对象A的引用计数器就-1，如果对象A的计数器的值为0，就说明对象A没有引用，
+可以被回收。
 
-  算法分成标记和清除两个阶段，先标记出要回收的对象，然后统一回收这些对象。
+**优点：**
+* 实时性较高，无需等到内存不够的时候，才开始回收，运行时根据对象的计数器是否为0，就可以直接回收。
 
-  <img src="img/%E6%A0%87%E8%AE%B0%E6%B8%85%E9%99%A4%E7%AE%97%E6%B3%95.jpg" style="zoom:80%;" />
+* 在垃圾回收过程中，应用无需挂起。如果申请内存时，内存不足，则立刻报OutOfMemoryError。
 
-  
+* 区域性，更新对象的计数器时，只是影响到该对象，不会扫描全部对象。
 
-* **标记整理**  
-	
-	![](img/%E6%A0%87%E8%AE%B0%E6%95%B4%E7%90%86%E7%AE%97%E6%B3%95.jpg)
+**缺点：**
+
+* 每次对象被引用时，都需要去更新计数器，有一点时间开销。
+
+* 浪费CPU资源，即使内存够用，仍然在运行时进行计数器的统计。
+
+* 无法解决循环引用问题。（最大的缺点）两个对象相互引用。
+
+#### 15.3.2 标记-清除(MarkSweep)
+
+标记清除算法，是将垃圾回收分为2个阶段，分别是标记和清除。
+
+* 标记：从根节点开始标记引用的对象。
+
+* 清除：未被标记引用的对象就是垃圾对象，可以被清理。
+
+**优缺点：**
+
+可以看到，标记清除算法解决了引用计数算法中的循环引用的问题，没有从root节点引用的对象都会被回收。
+同样，标记清除算法也是有缺点的：
+
+* 效率较低，标记和清除两个动作都需要遍历所有的对象，并且**在GC时，需要停止应用程序**，对于交互性要求比较高的应用而言这个体验是非常差的。
+
+* 通过标记清除算法清理出来的内存，**碎片化较为严重**，因为被回收的对象可能存在于内存的各个角落，所以清理出来的内存是不连贯的。
+
+<img src="img/%E6%A0%87%E8%AE%B0%E6%B8%85%E9%99%A4%E7%AE%97%E6%B3%95.jpg" style="zoom:80%;" />
+
+
+
+#### 15.3.3 标记-整理
+
+标记压缩算法是在标记清除算法的基础之上，做了优化改进的算法。和标记清除算法一样，也是从根节点开始，对对象的引用进行标记，在清理阶段，并不是简单的清理未标记的对象，而是将存活的对象压缩到内存的一端，然后清理边界以外的垃圾，从而解决了碎片化的问题。
+
+![](img/%E6%A0%87%E8%AE%B0%E6%95%B4%E7%90%86%E7%AE%97%E6%B3%95.jpg)
+
+<img src="img/%E6%A0%87%E8%AE%B0%E6%95%B4%E7%90%86" alt="image-20200205085106867" style="zoom:80%;" />
+
+**优缺点**：同标记清除算法，解决了标记清除算法的碎片化的问题，同时，标记压缩算法多了一步，对象移动内存位置的步骤，其效率也有有一定的影响。
+
+#### 15.3.4 标记-复制
+
+MinorGC的过程( 复制>清空>互换)
+
+1. eden、 SurvivorFrom 复制到SurvivorTo，年龄+1
+   首先，当Eden区满的时候会触发第一次GC,把还活着的对象拷贝到SurvivorFrom区，当Eden区再次触发GC的时候会扫描Eden区和From区域,对这两个区域进行垃圾回收，经过这次回收后还存活的对象，则直接复制到To区域(如果有对象的年龄已经达到了老年的标准，则赋值到老年代区)，同时把这些对象的年龄+1 。
+2. 清空eden、SurvivorFrom 然后，清空Eden和SurvivorFrom中的对象，也即复制之后有交换，谁空谁是To 
+3. SurvivorTo和SurvivorFrom互 换，原SurvivorTo成 为下一次GC时的SurvivorFrom区。部分对象会在From和To区域中复制来复制去，如此交换15次(由JVM参数MaxTenuringThreshold 决定，这个参数默认是15),最终如果还是存活，就存入到老年代。
+
+**优点：**
+
+* 在垃圾对象多的情况下，效率较高；
+
+* 清理后，内存无碎片；
+
+**缺点**：
+
+* 在垃圾对象少的情况下，不适用，如：老年代内存。
+* 分配的2块内存空间，在同一个时刻，只能使用一半，内存使用率较低。
+
+#### 15.3.5 分代算法
+
+根据回收对象的特点进行选择，在jvm中，年轻代适合使用复制算法，老年代适合使用标记清除或标记压缩算法。
+
 ## 16.GC Roots
 - 垃圾：内存中已经不再被使用到的空间
 
@@ -549,23 +769,57 @@ class DeadLockDemo implements  Runnable{
 	    * 方法区中的类静态属性引用的对象。
 	    * 方法区中常量引用的对象。
 	    * 本地方法栈中的JNI（Native方法）引用对象。
-## 17.JVM参数
+## 17.JVM
 ### 17.1 JVM参数
 
-* 标配参数：javaversion;help;showversion
-* X参数（了解）：
-	* Xint（解释执行）；
-	* Xcomp（第一次使用就编译成本地代码）；
-	* Xmixed（混合模式）
-* **XX参数**
+* 标配参数：java version;help;showversion
+
+* -X参数（非标准参数）：
+	
+	```cmd
+	-Xmixed           混合模式执行 (默认)
+	-Xint             仅解释模式执行
+	-Xbootclasspath:<用 ; 分隔的目录和 zip/jar 文件>
+					  设置搜索路径以引导类和资源
+	-Xbootclasspath/a:<用 ; 分隔的目录和 zip/jar 文件>
+					  附加在引导类路径末尾
+	-Xbootclasspath/p:<用 ; 分隔的目录和 zip/jar 文件>
+					  置于引导类路径之前
+	-Xdiag            显示附加诊断消息
+	-Xnoclassgc       禁用类垃圾收集
+	-Xincgc           启用增量垃圾收集
+	-Xloggc:<file>    将 GC 状态记录在文件中 (带时间戳)
+	-Xbatch           禁用后台编译
+	-Xms<size>        设置初始 Java 堆大小
+	-Xmx<size>        设置最大 Java 堆大小
+	-Xss<size>        设置 Java 线程堆栈大小
+	-Xprof            输出 cpu 配置文件数据
+	-Xfuture          启用最严格的检查, 预期将来的默认值
+	-Xrs              减少 Java/VM 对操作系统信号的使用 (请参阅文档)
+	-Xcheck:jni       对 JNI 函数执行其他检查
+	-Xshare:off       不尝试使用共享类数据
+	-Xshare:auto      在可能的情况下使用共享类数据 (默认)
+	-Xshare:on        要求使用共享类数据, 否则将失败。
+	-XshowSettings    显示所有设置并继续
+	-XshowSettings:all
+					  显示所有设置并继续
+	-XshowSettings:vm 显示所有与 vm 相关的设置并继续
+	-XshowSettings:properties
+					  显示所有属性设置并继续
+	-XshowSettings:locale
+					  显示所有与区域设置相关的设置并继续
+	```
+	
+* **XX参数**（使用率较高）
+	
 	* Boolean类型 **XX:+/开启（关闭）参数** 如：XX:+PrintGCDetails
 	* KV设值类型 **XX:属性Key=属性value**  如：XX:MetaspaceSize=128m
 
 ### 17.2查看配置参数命令：
 
 #### 17.2.1 查看参数第一种方法
-- 查看具体参数配置：jinfo flag 参数名 进程号
-- 显示所有配置：jinfo flags 进程号  
+- 查看具体参数配置：jinfo -flag 参数名 进程号
+- 显示所有配置：jinfo -flags 进程号  
 - 两个重要参数：  
 	* **Xms**:初始堆内存等价于（XX:InitialHeapSize）  
 	* **Xmx**:最大堆内存等价于（XX:MaxHeapSize）
@@ -578,13 +832,13 @@ class DeadLockDemo implements  Runnable{
 
 参数符号说明：“:=” 是修改后的参数值而普通“=”是初始参数
 ### 17.3 常用参数
-#### 17.3.1 Xms
+#### 17.3.1 -Xms
 初始内存，默认为物理内存1/64，等价于 XX:InitialHeapSize；
-#### 17.3.2 Xmx
+#### 17.3.2 -Xmx
 最大分配内存，默认为物理内存1/4，等价于 XX:MaxHeapSize；
-#### 17.3.3  Xss
+#### 17.3.3  -Xss
 设置单个线程栈的大小，一般默认为512k~1024k，等价于 XX:ThreadStackSize
-#### 17.3.4  Xmn
+#### 17.3.4  -Xmn
 设置年轻代大小
 #### 17.3.5  XX:+MetaspaceSize
 设置元空间大小，元空间的本质和永久代类似，都是对JVM规范中方法区的实现，不过**元空间与永久代之间最大的区别在于**：**元空间并不在虚拟机中，而是使用本地内存**。因此，默认情况下，元空间的大小仅受本地内存限制。 
@@ -594,13 +848,14 @@ Xms128m Xmx4096m Xss1024k XX: MetaspaceSize=512m XX: PrintCommandLineFlags XX:+P
 #### 17.3.6  XX:+PrintGCDetails
 打印垃圾回收日志 
 
-[**GC** (Allocation Failure) [PSYoungGen: 1861K>488K(2560K)] 1861K>732K(9728K), 0.0084952 secs] [Times: user=0.00 sys=0.00, real=0.02 secs]   
+```shell
+[GC (Allocation Failure) [PSYoungGen: 1861K>488K(2560K)] 1861K>732K(9728K), 0.0084952 secs] [Times: user=0.00 sys=0.00, real=0.02 secs]   
 [GC (Allocation Failure) [PSYoungGen: 488K>488K(2560K)] 732K>732K(9728K), 0.0012515 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]   
-[**Full GC** (Allocation Failure) [PSYoungGen: 488K>0K(2560K)] [ParOldGen: 244K>632K(7168K)] 732K>632K(9728K), [Metaspace: 3358K>3358K(1056768K)], 0.0071535 secs] [Times: user=0.00 sys=0.00, real=0.01 secs]     
+[Full GC (Allocation Failure) [PSYoungGen: 488K>0K(2560K)] [ParOldGen: 244K>632K(7168K)] 732K>632K(9728K), [Metaspace: 3358K>3358K(1056768K)], 0.0071535 secs] [Times: user=0.00 sys=0.00, real=0.01 secs]     
 [GC (Allocation Failure) [PSYoungGen: 0K>0K(2560K)] 632K>632K(9728K), 0.0003614 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]   
 [Full GC (Allocation Failure) [PSYoungGen: 0K>0K(2560K)] [ParOldGen: 632K>615K(7168K)] 632K>615K(9728K), [Metaspace: 3358K>3358K(1056768K)], 0.0061335 secs] [Times: user=0.11 sys=0.00, real=0.01 secs]   
 Exception in thread "main" java.lang.OutOfMemoryError: Java heap space at interview.App.main(App.java:11)
-
+```
 日志说明：
 ![](img/GC%E6%97%A5%E5%BF%97%E4%BF%A1%E6%81%AF.jpg)
 
@@ -615,16 +870,17 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space at interv
 例如：XX:SurvivorRatio=4,Eden:S0:S1=4:1:1  
 SurvivorRatio值设置eden区比例占多少，S0/S1相同
 
-**Heap 新生代堆空间（1/3）老年代堆空间（2/3）**  
-**PSYoungGen total 2560K**, used 126K [0x00000000ffd00000, 0x0000000100000000, 0x0000000100000000)    **eden space 2048K**, 6% used [0x00000000ffd00000,0x00000000ffd1f9b0,0x00000000fff00000)  
-  **from space 512K**, 0% used [0x00000000fff00000,0x00000000fff00000,0x00000000fff80000)  
-  **to   space 512K**, 0% used [0x00000000fff80000,0x00000000fff80000,0x0000000100000000)
-
- **ParOldGen       total 7168K**, used 615K [0x00000000ff600000, 0x00000000ffd00000, 0x00000000ffd00000) 
+**Heap 新生代堆空间（1/3）老年代堆空间（2/3）** 
+```shell
+PSYoungGen total 2560K, used 126K [0x00000000ffd00000, 0x0000000100000000, 0x0000000100000000)
+  eden space 2048K, 6% used [0x00000000ffd00000,0x00000000ffd1f9b0,0x00000000fff00000)  
+  from space 512K, 0% used [0x00000000fff00000,0x00000000fff00000,0x00000000fff80000)  
+  to   space 512K, 0% used [0x00000000fff80000,0x00000000fff80000,0x0000000100000000)
+ ParOldGen       total 7168K, used 615K [0x00000000ff600000, 0x00000000ffd00000, 0x00000000ffd00000) 
  object space 7168K, 8% used [0x00000000ff600000,0x00000000ff699e98,0x00000000ffd00000)  
  Metaspace       used 3461K, capacity 4496K, committed 4864K, reserved 1056768K  
   class space    used 379K, capacity 388K, committed 512K, reserved 1048576K
-
+```
 **MinorGC的过程( 复制>清空>互换) ** 
 **1: eden、 SuryivorFrom复制到SuryivorTo， 年龄+1**  
 首先，当Eden区满的时候会触发第一 次GC,把还活着的对象拷贝到SurvivorFrom区， 当Eden区再次触发GC的时候会扫描Eden区和From区域,对这两个区域进行垃圾回收，经过这次回收后还存活的对象,则直接复制到To区域(如果有对象的年龄已经达到了老年的标准，则赋值到老年代区)，同时把这些对象的年龄+1  
@@ -634,15 +890,15 @@ SurvivorRatio值设置eden区比例占多少，S0/S1相同
 最后，SurvivorTo和SurvivorFrom互换，原SurvivorTo成为 下次GC时的SurvivorFrom区。部分对象会在From和To区域中复制来复制去，如此交换15次(由JVM参数axTenuringThreshold决定.这个参数默认是15.最终如果还是存活.就在入到老年代。
 
 #### 17.3.8 XX:NewRatio
-配置年轻代与老年代在堆结构的占比  
-默认  
-XX:NewRatio=2新生代占1，老年代2，年轻代占整个堆的1/3  
-例如  
-XX:NewRatjo=4新生代占1,老年代4，年轻代占整个堆的1/5  
+配置年轻代与老年代在堆结构的占比 
+默认 
+XX:NewRatio=2 新生代占1，老年代2，年轻代占整个堆的1/3 
+例如 
+XX:NewRatio=4 新生代占1,老年代4，年轻代占整个堆的1/5 
 NewRatio值就是设置老年代的占比，剩下的1给新生代
 
 #### 17.3.9 XX:MaxTenuringThreshold 
-设置垃圾最大年龄：XX:MaxTenuringThreshold=0；默认:15，值为015  
+设置垃圾最大年龄：XX:MaxTenuringThreshold=0；默认:15，值为015 
 如果设置为0的话，则年轻代对象不经过Survivor区，直接进入年老代。对于年老代比较多的应用，可以提高效率。如果将此值设置为一个较大值，则年轻代对象会在Survivor区进行多次复制，这样可以增加对象再年轻代的存活时间，增加在年轻代即被回收的概论。
 
 
@@ -655,7 +911,7 @@ Object obj = new Object();
 对于一个普通的对象，如果没有其他的引用关系，只要超过了引用的作用域或者显式地将相应(强)引用赋值为null,
 一般认为就是可以被垃圾收集的了(当然具体回收时机还是要看垃圾收集策略)。
 
-### 18.2软引用SoftReference
+### 18.2 软引用SoftReference
 **内存足够的时候不回收，内存不够的时候进行回收**  
 软引用是一种相对强引用弱化了一些的引用，需要用 java.lang.ref.SoftReference类来实现，可以让对象豁免一些垃圾收集。  
 软引用通常用在对内存敏感的程序中，比如高速缓存就有用到软引用，内存够用的时候就保留，不够用就回收!
@@ -688,7 +944,6 @@ Java技术允许使用finalize()方法在垃圾收集器将对象从内存中清
 
 **GC 回收之前放到 ReferenceQueue 引用队列中**虚引用通知机制
 
-
 ```java
 Object obj = new Object();
 ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
@@ -697,7 +952,6 @@ System.out.println("GC前");
 System.out.println(obj);//java.lang.Object@4554617c
 System.out.println(phantomReference.get());//null
 System.out.println(referenceQueue.poll());//null
-
 System.out.println("GC后");
 obj = null;
 System.gc();
@@ -705,7 +959,6 @@ System.out.println(obj);//null
 System.out.println(phantomReference.get());//null
 System.out.println(referenceQueue.poll());//java.lang.ref.PhantomReference@74a14482  
 ```
-
 ## 19 OOM
 
 ### 19.1 java.lang.StackOverflowError
@@ -734,18 +987,21 @@ ByteBuffer.allocate(capability)第种方式是分配JVM堆内存，属于GC 管�
 ByteBuffer.allocteDirect(capability)第一种方式是分配OS 本地内存，不属FGC管辖范围，由于不需要内存拷贝所以速度相对较快。  
 * 但如果不断分配本地内存， 堆内存很少使用，那么JVM就不需要执行GC, DirectByteBuffer对象 们就不会被回收,这时候堆内存充足，但本地内存可能已经使用光了，再次尝试分配本地内存就会出现OutOfMemoryError,那程序就直接崩溃了。
 
-Xms5m Xmx5m XX:+PrintGCDetails XX:MaxDirectMemorySize=5m  
+-Xms5m -Xmx5m -XX:+PrintGCDetails -XX:MaxDirectMemorySize=5m  
 
 ```java
 System.out.println("初始JVM最大内存："+VM.maxDirectMemory());
 ByteBuffer byteBuffer = ByteBuffer.allocateDirect(10*1024*1024);//10m
 ```
-结果：  
-```[GC (Allocation Failure) [PSYoungGen: 1024K->488K(1536K)] 1024K->592K(5632K), 0.0007910 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]  
-初始JVM最大内存：5242880  
-[GC (System.gc()) [PSYoungGen: 1313K>488K(1536K)] 1417K>688K(5632K), 0.0008659 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]  
-[Full GC (System.gc()) [PSYoungGen: 488K>0K(1536K)] [ParOldGen: 200K>635K(4096K)] 688K>635K(5632K), [Metaspace: 3424K>3424K(1056768K)], 0.0056662 secs] [Times: user=0.00 sys=0.00, real=0.01 secs]  
-Exception in thread "main" java.lang.OutOfMemoryError: Direct buffer memory
+
+结果： 
+
+``` shell
+[GC (Allocation Failure) [PSYoungGen: 1024K->488K(1536K)] 1024K->592K(5632K), 0.0007910 secs] [Times: user=0.00 sys=0.00, real=0.00 secs] 
+[GC (System.gc()) [PSYoungGen: 1313K>488K(1536K)] 1417K>688K(5632K), 0.0008659 secs] [Times: user=0.00 sys=0.00, real=0.00 secs] 
+初始JVM最大内存：5242880 
+[Full GC (System.gc()) [PSYoungGen: 488K>0K(1536K)] [ParOldGen: 200K>635K(4096K)] 688K>635K(5632K), [Metaspace: 3424K>3424K(1056768K)], 0.0056662 secs] [Times: user=0.00 sys=0.00, real=0.01 secs] 
+Exception in thread "main" java.lang.OutOfMemoryError: Direct buffer memory 
 ```
 
 #### 19.2.3 java.lang.OutOfMemoryError：unable to create new native thread  
@@ -787,25 +1043,26 @@ GC算法（引用计数/复制/标记清除/标记整理）是内存回收的方
 
 ### 20.1 Serial(串行垃圾收集器)
 
-![SerialGC](img%5CSerialGC.jpg)
+串行垃圾收集器，是指使用单线程进行垃圾回收，垃圾回收时，只有一个线程在工作，并且java应用中的所有线程都要暂停，等待垃圾回收的完成。这种现象称之为STW（Stop-The-World）。 所以不适合服务器环境。它最适合单处理器计算机，因为它不能利用多处理器硬件，它在多处理器上对数据集较小（最大约100 MB）的应用很有用，因此Serial垃圾收集器依然是java虚拟机运行在Client模式下默认的新生代垃圾收集器。
 
-串行收集器**采用单线程**stoptheworld的方式进行收集， 所以不适合服务器环境。它最适合单处理器计算机，因为它不能利用多处理器硬件，它在多处理器上对数据集较小（最大约100 MB）的应用很有用，因此Serial垃圾收集器依然是java虚拟机运行在Client模式下默认的新生代垃圾收集器。
+![SerialGC](img%5CSerialGC.jpg)
 
 ```JVM参数：XX:+UseSerialGC ```
 
 开启后默认使用：Serial（Young区） + Serial Old（Old区）
 新生代使用复制算法，老年代使用标记整理算法
 
-### 20.2 ParNew并行垃圾收集器）
+### 20.2 ParNew(并行垃圾收集器)
 
-使用多线程进行垃圾回收，在垃圾收集时，会StoptheWorld暂停其他所有的工作线程直到它收集结束。
+使用多线程进行垃圾回收，在垃圾收集时，会Stop-The-World暂停其他所有的工作线程直到它收集结束。
 
 **ParNew收集器其实就是Serial收集器新生代的并行多线程版本**，最常见的应用场景是**配合老年代的CMSGC**工作，其余的行为和Serial收集器完全一样， ParNew垃圾收 器在垃圾收集过程中同样也要暂停所有其他的工作线程。**它是很多java虚拟机运行在Server模式下新生代的默认垃圾收集器**。
 
-常用对应JVM参数: XX:+UseParNewGC 启用ParNew收集器， 只影响新生代的收集，不影响老年代。
-开启上述参数后，会使用: ParNew(Young区用) + Serial Old的收集器组合，**该组合不推荐使用，新生代使用复制算法，老年代采用标记整理算法**
+JVM参数: -XX:+UseParNewGC  开启后，会使用: ParNew(Young区用) + Serial Old的收集器组合，
 
-XX：ParallelGCThreads 限制线程数量，默认开启和CPU数目相同的线程数
+**该组合不推荐使用，新生代使用复制算法，老年代采用标记整理算法**
+
+-XX：ParallelGCThreads 限制线程数量，默认开启和CPU数目相同的线程数
 
 ### 20.3 Parallel/Parallel Scavenge(并行垃圾收集器)
 
@@ -821,17 +1078,47 @@ XX：ParallelGCThreads 限制线程数量，默认开启和CPU数目相同的线
 
 **JVM参数**: XX:+UseParallelGC或XX:+UseParallelOldGC(可互相激活)使用Parallel Scanvenge收集器。
 
+* -XX:MaxGCPauseMillis
+  设置最大的垃圾收集时的停顿时间，单位为毫秒，需要注意ParallelGC为了达到设置的停顿时间，可能会调整堆大小或其他的参数，如果堆的大小设置的较小，就会导致GC工作变得很频繁，反而可能会影响到性能。
+  该参数使用需谨慎。
+
+* -XX:GCTimeRatio
+  设置垃圾回收时间占程序运行时间的百分比，公式为1/(1+n)。它的值为0~100之间的数字，默认值为99，也就是垃圾回收时间不能超过1%。
+
+* -XX:UseAdaptiveSizePolicy
+  自适应GC模式，垃圾回收器将自动调整年轻代、老年代等参数，达到吞吐量、堆大小、停顿时间之间的平衡。
+
+  一般用于，手动调整参数比较困难的场景，让收集器自动进行调整。
+
 并行压缩是使并行收集器能够并行执行主要收集的功能。如果没有并行压缩，则使用单个线程执行主要集合，这会大大限制可伸缩性。如果`XX:+UseParallelGC`指定了该选项，则默认情况下启用并行压缩。您可以使用` XX:UseParallelOldGC `选项禁用它。
 
 ### 20.4 CMS(并发垃圾收集器)
 
-![](img%5CCMSGC.jpg)
+CMS全称 Concurrent Mark Sweep，是一款并发的、使用标记-清除算法的垃圾回收器，该回收器是针对老年代垃圾回收的，通过参数-XX:+UseConcMarkSweepGC进行设置。
 
 **用户线程和垃圾收集线程同时执行**(不一定是并行， 可能**交替执行)**，此收集器用于那些希望较短暂停的垃圾收集并能与垃圾收集共享处理器资源的应用程序。
 
 如果在垃圾收集中花费了总时间的98％以上，而回收不到2％的堆，则抛出OutOfMemoryError 。
 
-XX:+UseConcMarkSweepGC
+![image-20200205151530635](img/cms_precess)
+
+CMS垃圾回收器的执行过程如下：
+
+* 初始化标记(CMS-initial-mark) ,标记root，会导致stw；
+
+* 并发标记(CMS-concurrent-mark)，与用户线程同时运行；
+
+* 预清理（CMS-concurrent-preclean），与用户线程同时运行；
+
+* 重新标记(CMS-remark) ，会导致stw；
+
+* 并发清除(CMS-concurrent-sweep)，与用户线程同时运行；
+
+* 调整堆大小，设置CMS在清理之后进行内存压缩，目的是清理内存中的碎片；
+
+* 并发重置状态等待下次CMS的触发(CMS-concurrent-reset)，与用户线程同时运行；
+
+![](img%5CCMSGC.jpg)
 
 **从JDK 9开始不推荐使用CMS收集器。推荐使用G1垃圾收集器**
 
@@ -846,12 +1133,13 @@ XX:+UseConcMarkSweepGC
 
    **Jdk8后已弃用**
 
-   ```verilog
+   ```shell
    Error: Could not create the Java Virtual Machine.
    Error: A fatal exception has occurred. Program will exit.
    Unrecognized VM option 'UseSerialOldGC'
    Did you mean '(+/)UseSerialGC'?
    ```
+
 
 ### 20.6 ParallelOldGC
 
@@ -859,7 +1147,17 @@ XX:+UseParallelOldGC
 
 ### 20.7 G1垃圾收集器
 
-G1垃圾收集器**将堆内存分割成不同的区域然后并发的对其进行垃圾回收**。
+#### 20.7.1 原理：
+
+G1垃圾收集器**将堆内存分割成不同的区域（Region）然后并发的对其进行垃圾回收**。取消了年轻代、老年代的物理划分，这些区域中包含了有逻辑上的年轻代、老年代区域。
+这样做的好处就是，我们再也不用单独的空间对每个代进行设置了，不用担心每个代内存是否足够。
+
+G1的设计原则就是简化JVM性能调优，开发人员只需要简单的三步即可完成调优：
+1. 第一步，开启G1垃圾收集器
+2. 第二步，设置堆的最大内存
+3. 第三步，设置最大的停顿时间
+
+G1中提供了三种模式垃圾回收模式，Young GC、Mixed GC 和 Full GC，在不同的条件下被触发。
 
 ![](img%5CG1.jpg)
 
@@ -871,30 +1169,125 @@ GarbageFirst（G1）垃圾收集器的目标是具有大量内存的多处理器
 - 对象分配和升级的速率可能会随时间而显着变化。
 - 可预测的暂停时间不超过几百毫秒，避免了长时间的垃圾收集暂停。
 
-G1取代了并发标记扫描（CMS）收集器。作为jdk9的默认收集器
-
-XX:+UseG1GC
+G1取代了并发标记扫描（CMS）收集器。作为jdk9的默认收集器，**使用参数-XX:+UseG1GC启用**
 
 G1与其他收集器主要区别：
 
-- 并行GC只能从整体上压缩和回收旧一代中的空间。G1将这项工作逐步分配到多个较短的集合中。这大大缩短暂停时间吞吐量的潜在开销。
+- 并行GC可以从整体上压缩和回收老年代中的空间。G1将这项工作逐步分配到多个较短的集合中。这大大缩短暂停时间吞吐量的潜在开销。
 - 与CMS类似，G1并发执行部分旧空间回收。然而，CMS无法对旧堆进行碎片整理，最终会遇到较长的Full GC。
 - 由于并发性吞吐量的影响，G1可能比其他收集器需要更高的开销。
 
 由于其工作方式，G1具有一些独特的机制来提高垃圾收集效率：
 
 - G1可以在任何收集期间回收一些旧的完全空的，较大的区域。这样可以避免许多其他不必要的垃圾收集，而无需付出很多努力即可释放大量空间。
-
 - G1可以选择尝试同时对Java堆上的重复字符串进行重复数据删除。
 
-常用参数：
+在G1划分的区域中，年轻代的垃圾收集依然采用暂停所有应用线程的方式，将存活对象拷贝到老年代或者Survivor空间，G1收集器通过将对象从一个区域复制到另外一个区域，完成了清理工作。
+
+这就意味着，在正常的处理过程中，G1完成了堆的压缩（至少是部分堆的压缩），这样也就不会有cms内存碎片问题的存在了。
+
+在G1中，有一种特殊的区域，叫Humongous区域。
+
+* 如果一个对象占用的空间超过了分区容量50%以上，G1收集器就认为这是一个巨型对象。
+
+* 这些巨型对象，默认直接会被分配在老年代，但是如果它是一个短期存在的巨型对象，就会对垃圾收集器造成负面影响。
+
+* 为了解决这个问题，G1划分了一个Humongous区，它用来专门存放巨型对象。如果一个H区装不下一个巨型对象，那么G1会寻找连续的H分区来存储。为了能找到连续的H区，有时候不得不启动Full GC。
+
+#### 20.7.2 Young GC
+
+Young GC主要是对Eden区进行GC，它在Eden空间耗尽时会被触发。
+
+* Eden空间的数据移动到Survivor空间中，如果Survivor空间不够，Eden空间的部分数据会直接晋升到年老代空间。
+
+* Survivor区的数据移动到新的Survivor区中，也有部分数据晋升到老年代空间中。
+
+* 最终Eden空间的数据为空，GC停止工作，应用线程继续执行。
+
+  ![image-20200205161318994](img/G1_younggc)
+
+  ![image-20200205161424114](img/younggc2)
+
+##### 20.7.2.1、Remembered Set（已记忆集合）
+
+在GC年轻代的对象时，我们如何找到年轻代中对象的根对象呢？
+根对象可能是在年轻代中，也可以在老年代中，那么老年代中的所有对象都是根么？
+如果全量扫描老年代，那么这样扫描下来会耗费大量的时间。
+于是，G1引进了RSet的概念。它的全称是Remembered Set，其作用是跟踪指向某个堆内的对象引用。
+
+![image-20200205161458520](img/rset)每个Region初始化时，会初始化一个RSet，该集合用来记录并跟踪其它Region指向该Region中对象的引用，每个Region默认按照512Kb划分成多个Card，所以RSet需要记录的东西应该是 xx Region的 xx Card。
+
+#### 20.7.3 Mixed GC
+
+当越来越多的对象晋升到老年代old region时，为了避免堆内存被耗尽，虚拟机会触发一个混合的垃圾收集器，即Mixed GC，该算法并不是一个Old GC，除了回收整个YoungRegion，还会回收一部分的Old Region，这里需要注意：是一部分老年代，而不是全部老年代，可以选择哪些old region进行收集，从而可以对垃圾回收的耗时时间进行控制。
+也要注意的是Mixed GC 并不是 Full GC。
+MixedGC什么时候触发？ 由参数 -XX:InitiatingHeapOccupancyPercent=n 决定。默认：45%，该参数的意思是：当老年代大小占整个堆大小百分比达到该阀值时触发。
+
+它的GC步骤分2步：
+
+1. 全局并发标记（global concurrent marking）
+2. 拷贝存活对象（evacuation）
+
+##### 20.7.3.1、全局并发标记
+
+全局并发标记，执行过程分为五个步骤：
+
+* 初始标记（initial mark，STW）
+  标记从根节点直接可达的对象，这个阶段会执行一次年轻代GC，会产生全局停顿。
+
+* 根区域扫描（root region scan）
+  G1 GC 在初始标记的存活区扫描对老年代的引用，并标记被引用的对象。该阶段与应用程序（非 STW）同时运行，并且只有完成该阶段后，才能开始下一次 STW 年轻代垃圾回收。
+
+* 并发标记（Concurrent Marking）
+  G1 GC 在整个堆中查找可访问的（存活的）对象。该阶段与应用程序同时运行，可以被 STW 年轻代垃圾回收中断。
+
+* 重新标记（Remark，STW）
+  该阶段是 STW 回收，因为程序在运行，针对上一次的标记进行修正。
+
+* 清除垃圾（Cleanup，STW）
+  清点和重置标记状态，该阶段会STW，这个阶段并不会实际上去做垃圾的收集，等待evacuation阶段来回收。
+
+##### 20.7.3.2、拷贝存活对象
+
+Evacuation阶段是全暂停的。该阶段把一部分Region里的活对象拷贝到另一部分Region中，从而实现垃圾的回收清理。
+
+#### 20.7.4 常用参数：
 
 * XX:+UseG1GC
-* XX:G1HeapRegionSize=n:设置的G1区域的大小。值是2的幂，范围是1MB到32MB。目标是根据最小的Java堆大小划分出region区域
-* XX:MxGCPauseMillis=n:最大GC停顿时间，这是个软目标，JVM将尽可能(但不保证)停顿小于这个时间
-* XX:nitiatingHeapOccupancyPercent=n:堆占用了多少的时候就触发GC，默认为45
-* XX:ConcGCThreads=n: 并发GC使用的线程数
-* XX:G1ReservePercenten: 设置作为空闲空间的预留内存百分比，以降低目标空间溢出的风险，默认值是10%
+
+* XX:G1HeapRegionSize=n
+
+  * 设置的G1区域的大小。值是2的幂，范围是1MB到32MB。目标是根据最小的Java堆大小划分出region区域
+
+* XX:MxGCPauseMillis=n
+
+  * 最大GC停顿时间，这是个软目标，JVM将尽可能(但不保证)停顿小于这个时间
+
+* XX:InitiatingHeapOccupancyPercent=n
+
+  * 当老年代大小占整个堆的多少的时候就触发MixedGC，默认为45%。
+
+* -XX:ParallelGCThreads=n
+  设置 STW 工作线程数的值。将 n 的值设置为逻辑处理器的数量。n 的值与逻辑处理器的数量相同，最多为 8。
+  
+* XX:ConcGCThreads=n:
+
+  * 并发GC使用的线程数，将 n 设置为并行垃圾回收线程数 (ParallelGCThreads)的 1/4 左右。
+
+* XX:G1ReservePercenten:
+
+  * 设置作为空闲空间的预留内存百分比，以降低目标空间溢出的风险，默认值是10%
+
+20.7.5 G1垃圾收集器优化建议
+
+* 年轻代大小
+  避免使用 -Xmn 选项或 -XX:NewRatio 等其他相关选项显式设置年轻代大小。
+  固定年轻代的大小会覆盖暂停时间目标。
+
+* 暂停时间目标不要太过严苛
+  G1 GC 的吞吐量目标是 90% 的应用程序时间和 10%的垃圾回收时间。
+  评估 G1 GC 的吞吐量时，暂停时间目标不要太严苛。目标太过严苛表示您愿意
+  承受更多的垃圾回收开销，而这会直接影响到吞吐量。
 
 ### 20.8 ZGC垃圾收集器
 
@@ -905,6 +1298,8 @@ ZGC适用于要求低延迟（少于10毫秒的暂停）或使用非常大的堆
 XX:+UseZGC
 
 从JDK 11开始，ZGC作为实验功能可用。
+
+### 20.9  垃圾收集器组合关系
 
 **YoungGC**:
 
@@ -927,7 +1322,7 @@ XX:+UseZGC
 
 <img src="img/GC.jpg" style="zoom:80%;" />
 
-### 20.9 收集器的选择
+### 20.10 收集器的选择
 
 除非您的应用程序有非常严格的暂停时间要求，否则请先运行您的应用程序选择收集器。
 
@@ -963,8 +1358,29 @@ XX:+UseZGC
     <td>XX:+UseG1GC</td><td>G1GC</td><td colspan=3>整体采用标记整理，局部使用复制算法，不会产生内存碎片</td> </tr>
 </table>
 
-
 参考：[HotSpot Virtual Machine Garbage Collection Tuning Guide](https://docs.oracle.com/en/java/javase/12/gctuning,"HotSpot "Virtual Machine Garbage Collection Tuning Guide")
+
+### 20.11  可视化GC日志分析
+
+#### 20.11.1 GC日志输出参数
+
+前面通过-XX:+PrintGCDetails可以对GC日志进行打印，我们就可以在控制台查看，这样虽然可以查看GC的信息，但是并不直观，可以借助于第三方的GC日志分析工具进行查看。
+在日志打印输出涉及到的参数如下：
+
+```shell
+‐XX:+PrintGC 输出GC日志
+‐XX:+PrintGCDetails 输出GC的详细日志
+‐XX:+PrintGCTimeStamps 输出GC的时间戳（以基准时间的形式）
+‐XX:+PrintGCDateStamps 输出GC的时间戳（以日期的形式，如 2013‐05‐04T21:53:59.234+0800）
+‐XX:+PrintHeapAtGC 在进行GC的前后打印出堆的信息
+‐Xloggc:../logs/gc.log 日志文件的输出路径
+```
+
+#### 20.11.2 GC Easy 可视化工具
+
+GC Easy是一款在线的可视化工具，易用、功能强大。
+
+https://gceasy.io/gc-index.jsp
 
 ## 21.Linux服务器性能查看命令：
 
@@ -995,17 +1411,17 @@ vmstatn 23
   **查看所有cpu核信息：mpstat P ALLj2** 
   **每个进程使用cpu的用量分解信息：pidstatu1 p进程编号**
   
-  ### 21.3 内存: free
-  
-  ### 21.4 硬盘: df
-  
-  ### 21.5  磁盘: iostat
-  
-  ### 21.6 网络: ifstat
+### 21.3 内存: free
+
+### 21.4 硬盘: df
+
+### 21.5  磁盘: iostat
+
+### 21.6 网络: ifstat
 
 ## 22. CPU占用过高的思路分析和定位
 
-   1.先用top命令找出CPU占比最高的进程
+1. 先用top命令找出CPU占比最高的进程
 
 2. ps ef或者jps进一步定位，找到后台程序
 
@@ -1075,8 +1491,9 @@ xxx in:readme项目的readme文件中包含xx的
 
 ### 24.4 高亮显示关键代码行数
 
-		1. 指定一行：java路径+#L行号
-  		2. 多行：java路径+#L行号1L行号2
+1. 指定一行：java路径+#L行号
+
+2. 多行：java路径+#L行号1L行号2
 
 ### 24.5 项目内搜索
 
@@ -1118,7 +1535,6 @@ Java NIO系统的核心在于:通道(Channel)和缓冲区(Buffer)。通道表示
 
 根据数据类型（除了Boolean）的不同，提供了相应的缓冲区。管理方式基本一致，通过allocate()获取缓冲区。
 
-```java
 ByteBuffer
 CharBuffer
 LongBuffer
@@ -1126,7 +1542,7 @@ FloatBuffer
 ShortBuffer
 IntBuffer
 DoubleBuffer
-```
+
 
 #### 25.1.2 核心方法：
 
@@ -1135,7 +1551,6 @@ put():存入数据到缓冲区；
 get():从缓冲区取数据。
 
 #### 25.1.3 核心参数：
-
 ```java
 private int mark = -1;//标记，记录当前position位置，可以通过reset()恢复到mark位置
 private int position = 0;//位置，缓冲区正在操作数据的位置
@@ -1176,9 +1591,11 @@ public static void main(String[] args) {
         System.out.println(byteBuffer.remaining());
     }
 }
+```
 
-/**
 运行结果：
+
+```shell
 --------init--------
 java.nio.HeapByteBuffer[pos=0 lim=1024 cap=1024]
 --------put--------
@@ -1192,9 +1609,9 @@ abcde
 java.nio.HeapByteBuffer[pos=0 lim=5 cap=1024]
 --------clear--------
 java.nio.HeapByteBuffer[pos=0 lim=5 cap=1024]
-
-**/
 ```
+
+
 
 #### 25.1.4 直接缓冲区和非直接缓冲区
 
@@ -1205,7 +1622,7 @@ java.nio.HeapByteBuffer[pos=0 lim=5 cap=1024]
 **直接缓冲区**：通过调用此类的allocateDirect()厂方法来创建。此方法返回的**缓冲区进行分配和取消**
 **分配所需成本通常高于非直接缓冲区**。直接缓冲区的内容可以驻留在常规的垃圾回收堆之外，因此，它们对
 应用程序的内存需求量造成的影响可能并不明显。所以，建议将直接缓冲区主要分配给那些易受基础系统的
-本机I/0操作影响的大型、持久的缓冲区。-般情况下，最好仅在直接缓冲区能在程序性能方面带来明显好
+本机I/0操作影响的大型、持久的缓冲区。一般情况下，最好仅在直接缓冲区能在程序性能方面带来明显好
 处时分配它们。
 直接字节缓冲区还可以通过**FileChannel的map()方法**将文件区域直接映射到内存中来创建。该方法返回
 **MappedByteBuffer**。Java平台的实现有助于通过JNI从本机代码创建直接字节缓冲区。如果以上这些缓冲区
@@ -1226,12 +1643,10 @@ DMA（直接存储器）—>Channel（通道）
 
 #### 25.2.1 主要实现类
 
-```JAVA
 FileChannel
 SocketChannel
 ServerSocketChannel
 DatagramChannel    
-```
 
 #### 25.2.2 获取通道
 
@@ -1246,9 +1661,8 @@ DatagramChannel
    Socket
    ServerSocket
    DatagramSocket
-   
    ```
-
+   
 2. 在JDK1.7中的NIO2针对各个通道提供静态方法 open()方法
 
 3. 在JDK1.7中的NIO2的Files工具类中的Files.newByteChannel()方法
@@ -1280,6 +1694,7 @@ DatagramChannel
       fileInputStream.close();
   }
   ```
+
 
 * 利用直接缓冲区对文件操作：
 
@@ -1345,7 +1760,6 @@ channel2.write(byteBuffers);
 Charset charset=Charset.forName("GBK");
 CharsetEncoder encoder = charset.newEncoder();
 CharsetDecoder decoder = charset.newDecoder();
-
 CharBuffer encodeBuffer = CharBuffer.allocate(1024);
 encodeBuffer.put("你好，世界！");
 encodeBuffer.flip();
@@ -1405,7 +1819,7 @@ void server() throws Exception {
     buffer.put("服务器接收成功！".getBytes());
     buffer.flip();
     socketChannel.write(buffer);
-
+    
     fileChannel.close();
     socketChannel.close();
     serverChannel.close();
@@ -1484,6 +1898,7 @@ void server() throws Exception {
   }
   ```
 
+
 * DatagramChannel 发送UDP包的通道
 
   ```java
@@ -1538,7 +1953,6 @@ void server() throws Exception {
 
 JavaNIO管道是2个线程之间的单向数据连接。Pipe有一个source通道和一 个sink通道。数据会
 被写到sink通道，从source通 道读取。
-
 ```java
 @Test
 public void send() throws Exception {
@@ -1551,23 +1965,36 @@ public void send() throws Exception {
 
 	buf.put("你好".getBytes());
 	buf.flip();
-
+	
 	sink.write(buf);
 	buf.clear();
 	// 3.获取管道中数据
-
+	
 	SourceChannel source = pipe.source();
-
+	
 	int len = 0;
 	while ((len = source.read(buf)) > 0) {
 		buf.flip();
 		System.out.println(new String(buf.array(), 0, len));
 		buf.clear();
 	}
-
+	
 	sink.close();
 }
 ```
 
-写作规范参考：[《中文技术文档的写作规范》](https：//github.com/ruanyf/documentstyleguide "https：//github.com/ruanyf/documentstyleguide")
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+写作规范参考：[《中文技术文档的写作规范》](https：//github.com/ruanyf/documentstyleguide "https：//github.com/ruanyf/documentstyleguide")
