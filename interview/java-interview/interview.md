@@ -511,19 +511,29 @@ class DeadLockDemo implements  Runnable{
 
 ### java运行时数据区：
 
-#### 1. 程序计数器（Program Counter Register）
+#### 1.  程序计数器（ Program Counter Register ）
 
-​		程序计数器是一块较小的内存空间，他可以看作是**当前线程**所**执行**的**字节码的行号指示器**。字节码解释器工作时就是通过改变这个计数器的值来选取下一条需要执行的字节码指令，它是程序控制流的指示器，分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。这个内存区域为“**线程私有**”，每条线程都有一个独立的程序计数器。
+​		程序计数器是一块较小的内存空间，他可以看作是**当前线程**所**执行**的**字节码的行号指示器**。字节码解释器工作时就是通过改变这个计数器的值来选取下一条需要执行的字节码指令，它是程序控制流的指示器，分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。这个内存区域为“**线程私有**”，每条线程都有一个独立的程序计数器。是唯一一个不会出现OOM的内存区域。
 
-#### 2. Java虚拟机栈
+#### 2.  Java虚拟机栈（ Java Virtual Machine Stack ）
 
-#### 3. 本地方法栈
+​		与程序计数器一样，Java虚拟机栈（Java Virtual Machine Stack）也是**线程私有**的，他的生命周期与线程相同。**虚拟机栈描述的是<font color="red">Java方法执行的线程内存模型</font>：每个方法执行的时候，Java虚拟机都会同步创建一个栈帧（Stack Frame） 用于存储局部变量、操作数栈、动态链接、方法出口等信息**。每一个方法被**调用直至执行完毕**的过程，就意味着一个栈帧在虚拟机栈中从**入栈到出栈**的过程。
 
-#### 4. Java堆
+#### 3.  本地方法栈（ Navive Method Stacks ）
 
-#### 5. 方法区
+​		本地方法栈和虚拟机栈所发挥的作用是非常相似的，其区别只有是虚拟机栈为虚拟机执行 Java 方法（字节码）服务，而**本地方法栈则是为虚拟机使用到的本地（ Native ）方法服务。**
 
-#### 6.运行时常量池
+#### 4.  Java 堆（ Java Heap ）
+
+​		Java堆（ Java Heap ）是**虚拟机所管理的内存中最大的一块**。Java 堆是被**所有线程共享**的一块内存区域，在虚拟机启动时创建。此内存区域的**唯一目的是存放对象实例**。
+
+#### 5.  方法区（ Method Area ）
+
+​		方法区（ Method Area ）与 Java 堆一样，是**各个线程共享的内存区域**，它用于**存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码缓存等数据**。虽然《 Java虚拟机规范 》中把方法区描述为堆的一个逻辑部分，但是它却有一个别名叫做 “非堆”（ No-Heap），目的是与Java堆区分开来。
+
+#### 6. 运行时常量池（ Runtime Constant Pool ）
+
+​		运行时常量池（ Runtime Constant Pool ）**是方法区的一部分**。Class 文件中除了有类的版本、字段、方法、接口等描述信息外，还有一项信息是**常量池表（Constant Pool Table ）**，**用于存放编译期生成的各种<font color="red">字面量与符号的引用</font>，这部分内容将在类加载后存放到方法区的运行时常量池中**。
 
 ### 15.1 JVM内存结构
 
@@ -674,14 +684,15 @@ Options:
 
    使用VisualJVM连接远程tomcat 添加远程主机：
 
-   
 
-### 15.3 常见的垃圾回收算法
-#### 15.3.1 引用计数
+### 15.3 垃圾回收算法
+#### 15.3.1 如何判断是否进行垃圾回收
+
+##### 15.3.1.1 引用计数
 
 有对象引用 引用计数加1无引用减1。不常用
 
-假设有一个对象A，任何一个对象对A的引用，那么对象A的引用计数器+1，当引用失败
+​		假设有一个对象A，任何一个对象对A的引用，那么对象A的引用计数器+1，当引用失败
 时，对象A的引用计数器就-1，如果对象A的计数器的值为0，就说明对象A没有引用，
 可以被回收。
 
@@ -695,10 +706,37 @@ Options:
 **缺点：**
 
 * 每次对象被引用时，都需要去更新计数器，有一点时间开销。
-
 * 浪费CPU资源，即使内存够用，仍然在运行时进行计数器的统计。
-
 * 无法解决循环引用问题。（最大的缺点）两个对象相互引用。
+
+对象相互引用：
+
+```java
+ObjectA objA = new ObjectA();
+ObjectB objB = new ObjectB();
+objA.objb = objB;
+objB.obja = pbjA;
+objA = null;
+objB = null;
+System.gc();
+//最终引用计数都不为0，引用计数法无法回收
+```
+
+##### 15.3.1.2 可达性分析算法
+
+​		GC Roots 的根对象作为起始节点集，从这些节点开始根据引用关系向下搜索，搜索过程所走过的路径称为“引用链”（Reference Chain）,如果某个对象到 GC Roots间没有任何引用链相连，或者用图论的话就是从 GC Roots 到这个对象不可达时，则证明此对象不可能再被使用。
+
+<img src="img/reachabilityAnalysis" style="zoom:80%;" />
+
+作为GC Roots的对象：
+
+* 虚拟机栈（栈帧中的本地变量表）中引用的对象。如各个线程被调用的方法堆栈中的参数、局部变量、临时变量等。
+* 方法区中的类静态属性引用的对象。如 Java 类中的引用类型静态变量。
+* 方法区中常量引用的对象。如字符串常量池（String Table）里的引用。
+* 本地方法栈中的 JNI（Native方法）引用的对象。
+* Java 虚拟机内部的引用，如基本数据类型对应的 Class 对象，一些常驻的异常对象（NullPointException、OutOfMemeryError）等，还有系统类加载器。
+* 所有被同步锁（synchronized）持有的对象。
+* 反映 Java 虚拟机内部情况的 JMXBean、JVMTI 中注册的回调、本地代码缓存等。
 
 #### 15.3.2 标记-清除(MarkSweep)
 
@@ -713,7 +751,7 @@ Options:
 可以看到，标记清除算法解决了引用计数算法中的循环引用的问题，没有从root节点引用的对象都会被回收。
 同样，标记清除算法也是有缺点的：
 
-* 效率较低，标记和清除两个动作都需要遍历所有的对象，并且**在GC时，需要停止应用程序**，对于交互性要求比较高的应用而言这个体验是非常差的。
+* 执行效率较低，标记和清除两个动作都需要遍历所有的对象，并且**在GC时，需要停止应用程序**，对于交互性要求比较高的应用而言这个体验是非常差的。
 
 * 通过标记清除算法清理出来的内存，**碎片化较为严重**，因为被回收的对象可能存在于内存的各个角落，所以清理出来的内存是不连贯的。
 
@@ -723,7 +761,7 @@ Options:
 
 #### 15.3.3 标记-整理
 
-标记压缩算法是在标记清除算法的基础之上，做了优化改进的算法。和标记清除算法一样，也是从根节点开始，对对象的引用进行标记，在清理阶段，并不是简单的清理未标记的对象，而是将存活的对象压缩到内存的一端，然后清理边界以外的垃圾，从而解决了碎片化的问题。
+标记压缩算法是在标记清除算法的基础之上，做了优化改进的算法。和标记清除算法一样，也是从根节点开始，对对象的引用进行标记，在清理阶段，并不是简单的清理未标记的对象，**而是将存活的对象压缩到内存的一端**，然后清理边界以外的垃圾，从而解决了碎片化的问题。
 
 ![](img/%E6%A0%87%E8%AE%B0%E6%95%B4%E7%90%86%E7%AE%97%E6%B3%95.jpg)
 
@@ -733,12 +771,16 @@ Options:
 
 #### 15.3.4 标记-复制
 
+将可用内存**按容量划分为大小相等的两块**，**每次只使用其中的一块**。当这一块的内存用完了，就将还存活着的对象复制到另外一块上面，然后再把已使用过的内存空间一次清理掉。
+
 MinorGC的过程( 复制>清空>互换)
 
 1. eden、 SurvivorFrom 复制到SurvivorTo，年龄+1
    首先，当Eden区满的时候会触发第一次GC,把还活着的对象拷贝到SurvivorFrom区，当Eden区再次触发GC的时候会扫描Eden区和From区域,对这两个区域进行垃圾回收，经过这次回收后还存活的对象，则直接复制到To区域(如果有对象的年龄已经达到了老年的标准，则赋值到老年代区)，同时把这些对象的年龄+1 。
 2. 清空eden、SurvivorFrom 然后，清空Eden和SurvivorFrom中的对象，也即复制之后有交换，谁空谁是To 
 3. SurvivorTo和SurvivorFrom互 换，原SurvivorTo成 为下一次GC时的SurvivorFrom区。部分对象会在From和To区域中复制来复制去，如此交换15次(由JVM参数MaxTenuringThreshold 决定，这个参数默认是15),最终如果还是存活，就存入到老年代。
+
+![img](img/copy)
 
 **优点：**
 
@@ -755,21 +797,72 @@ MinorGC的过程( 复制>清空>互换)
 
 根据回收对象的特点进行选择，在jvm中，年轻代适合使用复制算法，老年代适合使用标记清除或标记压缩算法。
 
-## 16.GC Roots
-- 垃圾：内存中已经不再被使用到的空间
+## 16 引用
 
-- 如果判断一个对象是否可以被回收
-	1. 引用计数法
-	
-	2. 可达性分析（根搜索路径）
-	
-	    作为GC Roots的对象：
-	
-	    * 虚拟机栈（栈帧中的局部变量区，也叫局部变量表）中引用的对象。
-	    * 方法区中的类静态属性引用的对象。
-	    * 方法区中常量引用的对象。
-	    * 本地方法栈中的JNI（Native方法）引用对象。
+### 16.1 强引用 Strong Reference
+
+```java
+Object obj = new Object();
+```
+
+​		当内存不足，JVM开始垃圾回收，**<font color="red">对于强引用的对象，只要强引用关系还存在，垃圾收集器就永远不会回收掉被引用的对象</font>**。
+强引用是我们最常见的普通对象引用。在Java中最常见的就是强引用，把一个对象赋给一个引用变量， 这个引用变量就是 一个强引用。当一个对象被强引用变量引用时，它处于可达状态，它是不可能被垃圾回收机制回收的，即使该对象以后永远都不会被用到JVM也不会回收。因此强引用是造成Java内存泄漏的主要原因之一。 
+​		对于一个普通的对象，如果没有其他的引用关系，只要超过了引用的作用域或者显式地将相应(强)引用赋值为null,一般认为就是可以被垃圾收集的了(当然具体回收时机还是要看垃圾收集策略)。
+
+### 16.2 软引用 Soft Reference
+
+**<font color="red">内存不够的时候进行回收</font>**。
+软引用是一种相对强引用弱化了一些的引用，需要用 java.lang.ref.SoftReference类来实现，可以让对象豁免一些垃圾收集。
+软引用通常用在对内存敏感的程序中，比如高速缓存就有用到软引用，内存够用的时候就保留，不够用就回收!
+
+### 16.3 弱引用 Weak Reference
+
+**只要GC就进行回收**，用 java.lang.ref.WeakReference类来实现
+
+```java
+Object obj = new Object();
+WeakReference<Object> weakReference = new WeakReference(obj);
+System.out.println(obj);//java.lang.Object@4554617c
+System.out.println(weakReference.get());//java.lang.Object@4554617c
+System.out.println("");
+obj=null;
+System.gc();
+System.out.println(obj);//null
+System.out.println(weakReference.get());//null
+
+```
+
+### 16.4 虚引用 Phantom Reference
+
+虛引用需要 java.lang.ref.PhantomReference 类来实现。  
+
+顾名思义，就是形同虚设，与其他几种引用都不同，虚引用并不会决定对象的生命周期。
+如果一个对象仅持有虚引用，那么它就和没有任何引用一样，在任何时候都可能被垃圾收集器回收，它不能单独使用也不能通过它访问对象，虚引用必须和引用队列(ReferenceQueue)联合使用。
+虚引用的主要作用是跟踪对象被垃圾回收的状态。仅仅是提供了一种确保对象被 finalize 以后，做某些事情的机制。
+PhantomReference 的get方法总是返回null,因此无法访问对应的引用对象。其意义在于说明一个对 象已经进入 finalization 阶段，可以被gc回收， 用来实现比 fialization 机制更灵活的回收操作。
+换句话说，设置虛引用关联的唯一目的，就是在这个对象被收集器回收的时候收到一个系统通知或者后续添加进一步的处理。
+Java技术允许使用finalize()方法在垃圾收集器将对象从内存中清除出去之前做必要的清理工作。
+
+**GC 回收之前放到 ReferenceQueue 引用队列中**虚引用**通知机制**
+
+```java
+Object obj = new Object();
+ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
+PhantomReference phantomReference = new PhantomReference(obj,referenceQueue);
+System.out.println("GC前");  
+System.out.println(obj);//java.lang.Object@4554617c
+System.out.println(phantomReference.get());//null
+System.out.println(referenceQueue.poll());//null
+System.out.println("GC后");
+obj = null;
+System.gc();
+System.out.println(obj);//null
+System.out.println(phantomReference.get());//null
+System.out.println(referenceQueue.poll());//java.lang.ref.PhantomReference@74a14482  
+```
+
 ## 17.JVM
+
 ### 17.1 JVM参数
 
 * 标配参数：java version;help;showversion
@@ -901,75 +994,45 @@ NewRatio值就是设置老年代的占比，剩下的1给新生代
 设置垃圾最大年龄：XX:MaxTenuringThreshold=0；默认:15，值为015 
 如果设置为0的话，则年轻代对象不经过Survivor区，直接进入年老代。对于年老代比较多的应用，可以提高效率。如果将此值设置为一个较大值，则年轻代对象会在Survivor区进行多次复制，这样可以增加对象再年轻代的存活时间，增加在年轻代即被回收的概论。
 
-
-## 18 引用
-### 18.1 强引用Reference
-Object obj = new Object();
-
-当内存不足，JVM开始垃圾回收，对于强引用的对象，就算是出现了OOM也不会对该对象进行回收，死都不收。  
-强引用是我们最常见的普通对象引用，**只要还有强引用指向一个对象，就能表明对象还“活着”，垃圾收集器不会碰这种对象**。在Java中最常见的就是强引用，把一个对象赋给一个引用变量， 这个引用变量就是 一个强引用。当一个对象被强引用变量引用时，它处于可达状态，它是不可能被垃圾回收机制回收的，即使该对象以后永远都不会被用到JVM也不会回收。因此强引用是造成Java内存泄漏的主要原因之一。  
-对于一个普通的对象，如果没有其他的引用关系，只要超过了引用的作用域或者显式地将相应(强)引用赋值为null,
-一般认为就是可以被垃圾收集的了(当然具体回收时机还是要看垃圾收集策略)。
-
-### 18.2 软引用SoftReference
-**内存足够的时候不回收，内存不够的时候进行回收**  
-软引用是一种相对强引用弱化了一些的引用，需要用 java.lang.ref.SoftReference类来实现，可以让对象豁免一些垃圾收集。  
-软引用通常用在对内存敏感的程序中，比如高速缓存就有用到软引用，内存够用的时候就保留，不够用就回收!
-
-### 18.3 弱引用WeakReference
-只要GC就进行回收，用 java.lang.ref.WeakReference类来实现
-
-```java
-Object obj = new Object();
-WeakReference<Object> weakReference = new WeakReference(obj);
-System.out.println(obj);//java.lang.Object@4554617c
-System.out.println(weakReference.get());//java.lang.Object@4554617c
-System.out.println("");
-obj=null;
-System.gc();
-System.out.println(obj);//null
-System.out.println(weakReference.get());//null
-
-```
-
-### 18.4 虚引用PhantomReference
-虛引用需要 java.lang.ref.PhantomReference 类来实现。  
-
-顾名思义，就是形同虚设，与其他几种引用都不同，虚引用并不会决定对象的生命周期。  
-如果一个对象仅持有虚引用，那么它就和没有任何引用一样，在任何时候都可能被垃圾收集器回收，它不能单独使用也不能通过它访问对象，虚引用必须和引用队列(ReferenceQueue)联合使用。
-虚引用的主要作用是跟踪对象被垃圾回收的状态。仅仅是提供了一种确保对象被 finalize 以后，做某些事情的机制。  
-PhantomReference 的get方法总是返回null,因此无法访问对应的引用对象。其意义在于说明一个对 象已经进入 finalization 阶段，可以被gc回收， 用来实现比 fialization 机制更灵活的回收操作。
-换句话说，设置虛引用关联的唯一目的，就是在这个对象被收集器回收的时候收到一个系统通知或者后续添加进一步的处理。  
-Java技术允许使用finalize()方法在垃圾收集器将对象从内存中清除出去之前做必要的清理工作。
-
-**GC 回收之前放到 ReferenceQueue 引用队列中**虚引用通知机制
-
-```java
-Object obj = new Object();
-ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
-PhantomReference phantomReference = new PhantomReference(obj,referenceQueue);
-System.out.println("GC前");  
-System.out.println(obj);//java.lang.Object@4554617c
-System.out.println(phantomReference.get());//null
-System.out.println(referenceQueue.poll());//null
-System.out.println("GC后");
-obj = null;
-System.gc();
-System.out.println(obj);//null
-System.out.println(phantomReference.get());//null
-System.out.println(referenceQueue.poll());//java.lang.ref.PhantomReference@74a14482  
-```
 ## 19 OOM
 
 ### 19.1 java.lang.StackOverflowError
 
-管运行   
+管运行   ，递归调用时。
+
+```java
+public static void stackOverflow() {
+	stackOverflow();	
+}
+//-Xss1m
+public static void main(String[] args) {
+	stackOverflow();
+}
+```
+```cmd
+Exception in thread "main" java.lang.StackOverflowError
+```
+
+
 
 ### 19.2 java.lang.OutOfMemoryError  
 
- Java heap space 管存储  
+ Java heap space 管存储  ,对象太大
+
+```java
+//-Xms1m -Xmx1m
+public static void main(String[] args) throws Exception {
+	byte[] bytes = new byte[10*1024*1024];
+}
+```
+```shell
+Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
+```
+
+
 
 #### 19.2.1 java.lang.OutOfMemoryError ：GC overhead limit exceeded  
+
 xx : MaxDirectMemorysize= 5m  
 
 * GC回收时间过长时会抛出OutOfMemroyError，**超过98%的时间用来做GC并且回收了不到2%的堆内存**
@@ -980,12 +1043,11 @@ xx : MaxDirectMemorysize= 5m
 #### 19.2.2 java.lang.OutOfMemoryError：Direct buffer memory  
 
 * 导致原因:
- 写NIO程序经常使ByteBuffer来读取或者写入数据， 这是一种基于通道(Channel)|与缓冲区(Buffer)的I/0方式,
-它可以使用Native函数库直接分配堆外内存，然后通过一个 存储在Java雄里面的DirectByteBuffer对象作为这块内存的引用进行操作。
-这样能在些场景中显蓍提高性能，因为避免了在Java堆和Native堆中来回复制数据。  
-ByteBuffer.allocate(capability)第种方式是分配JVM堆内存，属于GC 管辖范围，由于需要拷贝所以速度相对较慢  
-ByteBuffer.allocteDirect(capability)第一种方式是分配OS 本地内存，不属FGC管辖范围，由于不需要内存拷贝所以速度相对较快。  
-* 但如果不断分配本地内存， 堆内存很少使用，那么JVM就不需要执行GC, DirectByteBuffer对象 们就不会被回收,这时候堆内存充足，但本地内存可能已经使用光了，再次尝试分配本地内存就会出现OutOfMemoryError,那程序就直接崩溃了。
+ 写NIO程序经常使ByteBuffer来读取或者写入数据， 这是一种基于通道(Channel)|与缓冲区(Buffer)的I/O方式,它可以使用Native函数库直接分配堆外内存，然后通过一个 存储在Java雄里面的DirectByteBuffer对象作为这块内存的引用进行操作。
+这样能在些场景中显蓍提高性能，因为避免了在Java堆和Native堆中来回复制数据。
+ByteBuffer.allocate(capability)第种方式是分配JVM堆内存，属于GC 管辖范围，由于需要拷贝所以速度相对较慢
+ByteBuffer.allocteDirect(capability)第一种方式是分配OS 本地内存，不属FGC管辖范围，由于不需要内存拷贝，所以速度相对较快。  
+* 但如果不断分配本地内存， 堆内存很少使用，那么 JVM 就不需要执行 GC, DirectByteBuffer对象就不会被回收,这时候堆内存充足，但本地内存可能已经使用光了，再次尝试分配本地内存就会出现OutOfMemoryError,那程序就直接崩溃了。
 
 -Xms5m -Xmx5m -XX:+PrintGCDetails -XX:MaxDirectMemorySize=5m  
 
@@ -1025,21 +1087,37 @@ Exception in thread "main" java.lang.OutOfMemoryError: Direct buffer memory
 
 使用XX:PrintFlagsInitial 查看初始参数
 
-JVM参数XX:Metaspacesize8m  XX:MaxMetaspacesize=8m
+JVM参数：
+
+* -XX:**MetaspaceSize**8m  ，指定初始元空间大小，以字节为单位，到大该值就会触发垃圾收集进行类型卸载。
+
+* -XX:**MaxMetaspaceSize**=8m，设置元空间的最大值，默认是-1，即不限制，或者说只受限于本地内存大小。
+
 Java 8及之后的版本使用Metaspace来替代永久代。
 
-Metaspace是方法在HotSpot中的实现，它与持久代最大的区别在于: Metaspace并不在虚拟机内存中而是使用本地内存也即在java8中class metadata(the virtual machines internal presentation of Java class), 被存储在叫做Metaspace 的native memory
-永久代(java8后被原空间Metaspace取代)存放了以下信息:
-虚拟机加载的类信息
-常量池
-静态变量
-即时编译后的代码
+Metaspace是方法在HotSpot中的实现，它与持久代最大的区别在于: Metaspace并不在虚拟机内存中而是使用本地内存也即在java8中class metadata(the virtual machines internal presentation of Java class), 被存储在叫做Metaspace 的native memory。
+
+元空间（Metaspace）存放了以下信息:
+
+* 虚拟机加载的类信息
+* 访问修饰符
+
+* 常量池
+
+* 字段描述
+
+* 即时编译后的代码
 
 ## 20.垃圾收集器
 
 GC算法（引用计数/复制/标记清除/标记整理）是内存回收的方法论，垃圾收集器是算法的具体实现。
 
 查看默认收集器参数：XX:+CommandLineFlags
+
+**并行（Parallel）和并发（Concurrent）区别：**
+
+* 并行（Parallel）：并行描述的是**多条垃圾收集器线程之间的关系**，说明**同一时间有多条这样的线程在协同工作**，通常默认此时**用户线程是处于等待状态**。
+* 并发（Parallel）：并发描述的是**垃圾收集器和用户线程之间的关系**，说明**同一时间垃圾收集器线程与用户线程都在运行**。由于用户线程并未被冻结，所以程序任然能响应服务请求，但由于垃圾收集器线程占用了一部分系统资源，此时**应用程序的处理的吞吐量受到一定的影响**。
 
 ### 20.1 Serial(串行垃圾收集器)
 
@@ -1068,25 +1146,26 @@ JVM参数: -XX:+UseParNewGC  开启后，会使用: ParNew(Young区用) + Serial
 
 ![ParellelGC](img%5CParellelGC.jpg)
 
-并行收集器也称为吞吐量收集器，它是类似于串行收集器的分代收集器。**串行收集器和并行收集器之间的主要区别是并行收集器具有多个线程**，这些线程用于加速垃圾收集。使用复制算法，**串行收集器在新生代和老年代的并行化**。
+并行收集器也称为**吞吐量优先收集器**，它是类似于串行收集器的分代收集器。**串行收集器和并行收集器之间的主要区别是并行收集器具有多个线程**，这些线程用于加速垃圾收集。使用复制算法，**串行收集器在新生代和老年代的并行化**。
 
 并行收集器旨在用于具有在多处理器或多线程硬件上运行的中型到大型数据集的应用程序。
 
 它重点关注的是:
-可控制的吞吐量(**Thoughput=运行用户代码时间/(运行用户代码时间+垃圾收集时间),也即比如程序运行100分钟，垃圾收集时间1分钟，吞吐量就是99%**)。高吞吐量意味若高效利用CPU的时间，它多用于在后台运算而不需要太多交互的任务。
+**可控制的吞吐量**(Thoughput),也即比如程序运行100分钟，垃圾收集时间1分钟，吞吐量就是99%。高吞吐量意味若高效利用CPU的时间，它多用于在后台运算而不需要太多交互的任务。
 **自适应调节策略也是ParallelScavenge收集器与ParNew收集器的一个重要区别**。**自适应调节策略**:虚拟机会根据当前系统的运行情况收集性能监控信息，动态调整这些参数以提供最合适的停顿时间(XX:MaxGCPauseMilis)或最大的吞吐量。
+
+**吞吐量**=运行用户代码时间/(运行用户代码时间+垃圾收集时间)
 
 **JVM参数**: XX:+UseParallelGC或XX:+UseParallelOldGC(可互相激活)使用Parallel Scanvenge收集器。
 
 * -XX:MaxGCPauseMillis
-  设置最大的垃圾收集时的停顿时间，单位为毫秒，需要注意ParallelGC为了达到设置的停顿时间，可能会调整堆大小或其他的参数，如果堆的大小设置的较小，就会导致GC工作变得很频繁，反而可能会影响到性能。
-  该参数使用需谨慎。
-
+  设置最大的垃圾收集时的停顿时间，单位为毫秒，**收集器将尽力保证内存回收花费的时间不超过用户设定值**。需要注意ParallelGC为了达到设置的停顿时间，可能会调整堆大小或其他的参数，如果堆的大小设置的较小，就会导致GC工作变得很频繁，反而可能会影响到性能。该参数使用需谨慎。
+  
 * -XX:GCTimeRatio
-  设置垃圾回收时间占程序运行时间的百分比，公式为1/(1+n)。它的值为0~100之间的数字，默认值为99，也就是垃圾回收时间不能超过1%。
+  设置**垃圾回收时间占程总时间的百分比**，公式为1/(1+n)。它的值为0~100之间的数字，默认值为99，也就是垃圾回收时间不能超过1%。
 
 * -XX:UseAdaptiveSizePolicy
-  自适应GC模式，垃圾回收器将自动调整年轻代、老年代等参数，达到吞吐量、堆大小、停顿时间之间的平衡。
+  **垃圾收集自适应策略**（ GC Ergonomics），垃圾回收器将自动调整年轻代、老年代等参数，达到吞吐量、堆大小、停顿时间之间的平衡。
 
   一般用于，手动调整参数比较困难的场景，让收集器自动进行调整。
 
@@ -1985,7 +2064,7 @@ public void send() throws Exception {
 
 
 
-
+学习Java EE规范，推荐看JBoss源码；学习类加载器知识，推荐看OSGi源码
 
 
 
