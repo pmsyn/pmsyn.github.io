@@ -270,6 +270,8 @@ pull命令相当于 fetch+merge两个操作命令
 
 当我们在Production发现新的Bug时候，我们需要创建一个Hotfix, 完成Hotfix后，我们合并回Master和Develop分支，所以Hotfix的改动会进入下一个Release
 
+![](img/git_flow.jpg)
+
 ### 1.3.2 Git Flow如何工作
 
 #### 初始分支
@@ -296,7 +298,7 @@ Release分支基于Develop分支创建，打完Release分之后，我们可以�
 
 ![img](img/git_flow_release)
 
-#### 维护分支 Hotfix
+#### 热修复分支 Hotfix
 
 分支名 hotfix/*
 
@@ -307,3 +309,11 @@ hotfix分支基于Master分支创建，开发完后需要合并回Master和Devel
 ### 1.3.3 Git Flow GUI
 
 https://github.com/nvie/gitflow
+
+## 1.4 忽略特殊文件
+
+在~/.gitconfig 文件中加入
+
+excludesfile=文件路径，文件路径使用“/”
+
+## 1.5 安装 GitLab
