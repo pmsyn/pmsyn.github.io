@@ -19,7 +19,7 @@
 
         <spring.security.version>5.0.4.RELEASE</spring.security.version>
 
-        <shiro.version>1.4.0</shiro.version>
+        <shiro.version>1.5.0</shiro.version>
 
         <!--auth-->
         <oauth.version>1.0.2</oauth.version>
