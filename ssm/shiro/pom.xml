@@ -46,7 +46,7 @@
 
         <druid.version>1.1.6</druid.version>
 
-        <fastjson.version>1.1.41</fastjson.version>
+        <fastjson.version>1.2.25</fastjson.version>
         <!--jsp-->
         <jsp.version>2.3.1</jsp.version>
 
