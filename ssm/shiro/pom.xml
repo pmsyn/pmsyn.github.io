@@ -15,11 +15,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <spring.version>5.0.5.RELEASE</spring.version>
+        <spring.version>5.2.3.RELEASE</spring.version>
 
         <spring.security.version>5.0.4.RELEASE</spring.security.version>
 
-        <shiro.version>1.4.0</shiro.version>
+        <shiro.version>1.5.0</shiro.version>
 
         <!--auth-->
         <oauth.version>1.0.2</oauth.version>
@@ -46,7 +46,7 @@
 
         <druid.version>1.1.6</druid.version>
 
-        <fastjson.version>1.1.41</fastjson.version>
+        <fastjson.version>1.2.25</fastjson.version>
         <!--jsp-->
         <jsp.version>2.3.1</jsp.version>
 
