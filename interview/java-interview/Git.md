@@ -153,7 +153,7 @@
 
 ## 1.2 分支管理
 
-#### 1.2.1 分支的有点
+#### 1.2.1 分支的优点
 
 * 同时并行推进多个功能开发，提高开发效率；
 * 各个分支在开发过程中，如果某一个分支开发失败，不会对其他分支造成影响，失败分支删除重新开始即可。
@@ -205,7 +205,7 @@
 
    ### 1.3 代码提交到远程库
 
-   #### 1.3.1 推送本地代码到远程
+   #### 1.3.1 push 推送本地代码到远程
 
    ```shell
    --将远程库地址取别名存到本地
@@ -216,7 +216,7 @@
 
    ![image-20200218153040032](img/git_remote)
 
-#### 1.3.2 克隆远程库代码
+#### 1.2.3 clone 克隆远程库代码
 
 ```shell
 git clone https://github.com/pengmengsheng/pengmengsheng.github.io.git
@@ -230,20 +230,80 @@ git clone https://github.com/pengmengsheng/pengmengsheng.github.io.git
 
 * 初始化本地库
 
-#### 1.3.3 邀请加入团队
+#### 1.2.4 邀请加入团队
 
 ![image-20200218160014449](img/github_invitor)
 
-#### 1.3.4 pull 拉取代码
+#### 1.2.5 pull 拉取代码
 
 pull命令相当于 fetch+merge两个操作命令
 
 1. git fetch [远程地址别名] [远程分支名]：下载远程文件
 2. git merge [远程地址别名]/[远程分支名]:与本地库进行合并
 
-#### 1.3.5 跨团队提交
+#### 1.2.6 跨团队提交
 
 1. 先fork项目,修改 push到远程
 2. pull request
 
-<img src="img/git.jpg" alt="image-20200218164848086" />
+## 1.3 Git 使用中简易遵循 Git 标准 Flow
+
+### 1.3.1 Git Flow常用的分支
+
+- Production 分支
+
+也就是我们经常使用的Master分支，这个分支最近发布到生产环境的代码，最近发布的Release， 这个分支只能从其他分支合并，不能在这个分支直接修改
+
+- Develop 分支
+
+这个分支是我们是我们的主开发分支，包含所有要发布到下一个Release的代码，这个主要合并与其他分支，比如Feature分支
+
+- Feature 分支
+
+这个分支主要是用来开发一个新的功能，一旦开发完成，我们合并回Develop分支进入下一个Release
+
+- Release分支
+
+当你需要一个发布一个新Release的时候，我们基于Develop分支创建一个Release分支，完成Release后，我们合并到Master和Develop分支
+
+- Hotfix分支
+
+当我们在Production发现新的Bug时候，我们需要创建一个Hotfix, 完成Hotfix后，我们合并回Master和Develop分支，所以Hotfix的改动会进入下一个Release
+
+### 1.3.2 Git Flow如何工作
+
+#### 初始分支
+
+所有在Master分支上的Commit应该Tag
+
+![img](img/git_flow_master.jpf)
+
+#### Feature 分支
+
+分支名 feature/*
+
+Feature分支做完后，必须合并回Develop分支, 合并完分支后一般会删点这个Feature分支，但是我们也可以保留
+
+![img](img/git_flow_feature.jpg)
+
+#### Release分支
+
+分支名 release/*
+
+Release分支基于Develop分支创建，打完Release分之后，我们可以在这个Release分支上测试，修改Bug等。同时，其它开发人员可以基于开发新的Feature (记住：一旦打了Release分支之后不要从Develop分支上合并新的改动到Release分支)
+
+发布Release分支时，合并Release到Master和Develop， 同时在Master分支上打个Tag记住Release版本号，然后可以删除Release分支了。
+
+![img](img/git_flow_release)
+
+#### 维护分支 Hotfix
+
+分支名 hotfix/*
+
+hotfix分支基于Master分支创建，开发完后需要合并回Master和Develop分支，同时在Master上打一个tag
+
+![img](img/git_flow_hotfix.jpg)
+
+### 1.3.3 Git Flow GUI
+
+https://github.com/nvie/gitflow
