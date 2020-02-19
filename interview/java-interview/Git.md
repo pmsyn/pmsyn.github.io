@@ -55,101 +55,104 @@
 
 ### 1.1.2 基本操作
 
-1. #### 查看状态
+#### 1.查看状态
 
-   ```shell
-   git status
-   ```
+```shell
+git status
+```
 
-2. #### 添加操作
+#### 2.添加操作
 
-   ```shell
-   git add 
-   ```
+```shell
+--添加文件
+git add 文件名
+--添加所有文件
+git add .
+```
 
-   将新增、修改文件添加到暂存区。
+将新增、修改文件添加到暂存区。
 
-3. #### 提交操作
+#### 3.提交操作
 
-   ```shell
-   git commit -m "message"
-   ```
+```shell
+git commit -m "message" 文件名
+```
 
-   将文件提交到本地代码库。
+将文件提交到本地代码库。
 
-4. #### 查看历史记录：
+#### 4.查看历史记录：
 
-   ```powershell
-   git log
-   commit d209d21c49646cc5bb406bbef583e4a8030f5490
-   Author: pms <pms@126.com>
-   Date:   Tue Feb 18 10:37:43 2020 +0800
-   
-       add readme file
-   --简洁模式
-   git log --pretty=online
-   c56f2046c0dbc3b4ae46b62a7bfb4bb83ff0e319 (HEAD -> master) update
-   d209d21c49646cc5bb406bbef583e4a8030f5490 add readme file
-   
-   git log --oneline
-   c56f204 (HEAD -> master) update
-   d209d21 add readme file
-   
-   --HEAD@{移动到当前版本需要多少步}
-   git reflog
-   c56f204 (HEAD -> master) HEAD@{0}: commit: update
-   d209d21 HEAD@{1}: commit (initial): add readme file
-   
-   ```
+```powershell
+git log
+commit d209d21c49646cc5bb406bbef583e4a8030f5490
+Author: pms <pms@126.com>
+Date:   Tue Feb 18 10:37:43 2020 +0800
 
-   
+    add readme file
+--简洁模式
+git log --pretty=online
+c56f2046c0dbc3b4ae46b62a7bfb4bb83ff0e319 (HEAD -> master) update
+d209d21c49646cc5bb406bbef583e4a8030f5490 add readme file
 
-5. #### 版本前进/回退
+git log --oneline
+c56f204 (HEAD -> master) update
+d209d21 add readme file
 
-   * 基于索引值【推荐】
+--HEAD@{移动到当前版本需要多少步}
+git reflog
+c56f204 (HEAD -> master) HEAD@{0}: commit: update
+d209d21 HEAD@{1}: commit (initial): add readme file
 
-     ```shell
-     git reset --hard 索引值
-     ```
+```
 
-     ![image-20200218110315662](img/git_reset_index)
 
-   * 使用^符号:只能后退
 
-     ```shell
-     git reset --hard HEAD^
-     ```
+#### 5.版本前进/回退
 
-     一个^后退一步，N个^后退N步。
+* 基于索引值【推荐】
 
-     ![image-20200218110908737](img/git_rest%5E)
+  ```shell
+  git reset --hard 索引值
+  ```
 
-   * 使用~符号
+  ![image-20200218110315662](img/git_reset_index)
 
-     ```shell
-     git reset --hard HEAD~1
-     ```
+* 使用^符号:只能后退
 
-     HEAD~n 后退到第n步
+  ```shell
+  git reset --hard HEAD^
+  ```
 
-6. #### 删除文件后并找回
+  一个^后退一步，N个^后退N步。
 
-   回退到删除前版本
+  ![image-20200218110908737](img/git_rest%5E)
 
-   ```shell
-   git reset --hard [指针位置]
-   ```
+* 使用~符号
 
-   
+  ```shell
+  git reset --hard HEAD~1
+  ```
 
-7. #### 文件版本比较
+  HEAD~n 后退到第n步
 
-   ```shell
-   git diff 文件名
-   --将工作区中的文件和暂存区进行比较
-   git diff 【本地库历史版本】【文件名】
-   --将工作区中的文件和本地库历史记录比较
-   ```
+#### 6.删除文件后并找回
+
+回退到删除前版本
+
+```shell
+git reset --hard [指针位置]
+```
+
+
+
+#### 7.文件版本比较
+
+```shell
+git diff 文件名
+--将工作区中的文件和暂存区进行比较
+git diff 【本地库历史版本】【文件名】
+--将工作区中的文件和本地库历史记录比较
+```
 
 ## 1.2 分支管理
 
