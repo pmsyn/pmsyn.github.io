@@ -1,5 +1,4 @@
 <h1 style="text-align:center">Git使用</h1>
-
 # 1.命令行操作
 
 ## 1.1 本地库操作
@@ -190,8 +189,10 @@ git diff 【本地库历史版本】【文件名】
    * 执行merge命令
 
    ```shell
-   git checkout [被合并的分支名]
-   git merge [修改分支名]
+   --在master中新建分支
+   git checkout [新建分支名]
+   --在master中合并新建分支
+   git merge [新建分支名]
    ```
 
 5. 解决冲突
@@ -210,13 +211,15 @@ git diff 【本地库历史版本】【文件名】
 
    #### 1.3.1 push 推送本地代码到远程
 
+   git push <远程主机名 可省略> <本地分支名> <远程分支名>
+   
    ```shell
    --将远程库地址取别名存到本地
    git remote add pmsgithub https://github.com/pengmengsheng/pengmengsheng.github.io.git
-   --将本地master分支提交到远程master分支
-   git push origin master
+   --将本地master分支提交到远程origin对应的master分支
+git push origin master
    ```
-
+   
    ![image-20200218153040032](img/git_remote)
 
 #### 1.2.3 clone 克隆远程库代码
