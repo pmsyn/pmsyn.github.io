@@ -57,7 +57,7 @@ volatile实现**禁止指令重排优化**。从而避免多线程环境下程�
 
 由于编译器和处理都能执行指令重排优化。如果在指令间插入一条Memory Barrier则会告诉编译器和CPU,不管什么指令都不能和这条Memory Barrier指令重排序，即**通过插入内存屏障禁止在内存屏障前后的指令执行重排序优化**。内存屏障另外一个作用是**强制刷出各种CPU的缓存数据**，因此任何CPU上的线程都能读取到这些数据的最新版本。
 
-![](img/2%20(4).png)
+<img src="img/2%20(4).png"  />
 
 
 
@@ -78,16 +78,17 @@ public static SingletonDemo getInstance(){
 ```
 
 ## 4.CAS(比较并交换)
-CAS的全称为CompareAndSwap， **它是一条CPU并发原语**。  
+CAS 的全称为 CompareAndSwap， **它是一条 CPU 并发原语**。 
 它的功能是判断内存某个位置的值是否为预期值，如果是则更改为新的值，这个过程是原子的。  
-CAS并发原语体现在JAVA语言中就是sun.misc.Unsafe类中的各个方法。调用UnSafe类中的CAS方法，JVM会帮我们实现出CAS汇编指令。这是一种完全依赖于硬件的功能，通过它实现了原子操作。再次强调，由于CAS是一种系统原语，原语属于操作系统用语范畴，是由若干条指令组成的，用于完成某个功能的一个过程，**并且原语的执行必须是连续的，在执行过程中不允许被中断，也就是说CAS是一条CPU的原子指令，不会造成所谓的数据不一致问题。**
+CAS 并发原语体现在JAVA语言中就是 sun.misc.Unsafe 类中的各个方法。调用 UnSafe 类中的 CAS 方法，JVM 会帮我们实现出 CAS 汇编指令。这是一种完全依赖于硬件的功能，通过它实现了原子操作。再次强调，由于 CAS 是一种系统原语，原语属于操作系统用语范畴，是由若干条指令组成的，用于完成某个功能的一个过程，**并且原语的执行必须是连续的，在执行过程中不允许被中断，也就是说 CAS 是一条 CPU 的原子指令，不会造成所谓的数据不一致问题。**
 
 ## 4.1 自旋锁
 
 Unsafe类
 
-* 1.Unsafe是CAS的核心类，由于Java方法无法直接访问底层系统，需要通过本地(native)方法来访问，Unsafe相当于一个后门，基于该类可以直接操作特定内存的数据。Unsafe类存在于sun.misc包中，其内部方法操作可以像C的指针一样直接操作内存，因为Java中CAS操作的执行依赖于Unsafe类的方法。  
-  **注意**：Unsafe类中的所有方法都是native修饰的，也就是说Unsafe类中的方法都直接调用操作系统底层资源执行相应任务 。
+* 1.Unsafe 是 CAS 的核心类，由于 Java 方法无法直接访问底层系统，需要通过本地(native)方法来访问，Unsafe 相当于一个后门，基于该类可以直接操作特定内存的数据。Unsafe 类存在于 sun.misc 包中，其内部方法操作可以像 C 的指针一样直接操作内存，因为 Java 中 CAS 操作的执行依赖于 Unsafe 类的方法。
+  
+   **注意**：Unsafe类中的所有方法都是native修饰的，也就是说Unsafe类中的方法都直接调用操作系统底层资源执行相应任务 。
   
 * 2.变量**valueOffset**，表示该变量值在内存中的偏移地址，因为Unsafe就是根据内存偏移地址获取数据的。
 
@@ -103,11 +104,13 @@ Unsafe类
    } 
    ```
    
-* 3.变量value用volatile修饰，保证了多线程之间的内存可见性。  
-CAS>Unsafe>CAS底层思想>ABA>原子引用更新>如何避免ABA问题  
-CAS算法实现一个重要前提需要取出内存中某时刻的数据并在当下时刻比较并替换，那么在这个时间差类会导致数据的变化。  
-比如说一个线程one从内存位置V中取出A，这时候另一个线程two也从内存中取出A，并且线程two进行了一些操作将值变成了B，然后线程two又将V位置的数据变成A，这时候线程one进行CAS操作发现内存中仍然是A，然后线程one操作成功。
-尽管线程one的CAS操作成功，但是不代表这个过程就是没有问题的。
+* 3.变量value用volatile修饰，保证了多线程之间的内存可见性。 
+
+  **CAS>Unsafe>CAS底层思想>ABA>原子引用更新>如何避免ABA问题** 
+
+  CAS算法实现一个重要前提需要取出内存中某时刻的数据并在当下时刻比较并替换，那么在这个时间差类会导致数据的变化。 
+  比如说一个线程one从内存位置V中取出A，这时候另一个线程two也从内存中取出A，并且线程two进行了一些操作将值变成了B，然后线程two又将V位置的数据变成A，这时候线程one进行CAS操作发现内存中仍然是A，然后线程one操作成功。
+  尽管线程one的CAS操作成功，但是不代表这个过程就是没有问题的。
 
 **如何解决ABA**：
 理解原子引用+新增一种机制，修改版本号（类似时间戳）
@@ -200,7 +203,7 @@ ReentrantReadWriteLock 其读锁是共享锁，其写锁是独占锁。
 	lock.writeLock().lock();
 	```
 
-### 6.5.Lock显示锁
+### 6.5.Lock 显示锁
 - 通过lock()方法上锁，unlock()释放锁。
 
 	```JAVA
@@ -209,8 +212,8 @@ ReentrantReadWriteLock 其读锁是共享锁，其写锁是独占锁。
 	lock.unlock();
 	```
 
-### 7. 闭锁CountDownLatch
-- CountDownLatch一个正数计数器，countDown方法对计数器做减操作，await方法等待计数器达到0。所有await的线程都会阻塞直到计数器为0或者等待线程中断或者超时。
+### 7. 闭锁 CountDownLatch
+- CountDownLatch一个正数计数器，countDown 方法对**计数器做减操作**，await方法等待计数器达到0。所有 await 的线程都会阻塞直到计数器为 0 或者等待线程中断或者超时。
 
 ``` java
 CountDownLatch latch = new CountDownLatch(5);
@@ -300,32 +303,33 @@ for(int i=1;i<=6;i++) {
 * LinkedTransferQueue：由链麦结构组成的无界阻塞队列。  
 * LinkedBlockingDeque：由链表结构组成的双向阻塞队列。
 
-多线程判断使用while循环防止虚假唤醒
+**多线程判断使用while循环防止虚假唤醒**
 
 ## 11.Synchornized和Lock区别联系
-* 1.原始构成  
-synchronized是关键字属于JVM层面，monitorenter(底层是通过tmoni tor对象来完成，其实wait/notify 等方法也依赖monitor对象只有在同步块或方法中才能调wait/notify等方法monitorexit   
+* 1.原始构成 
+synchronized是关键字属于JVM层面，monitorenter(底层是通过tmoni tor对象来完成，其实wait/notify 等方法也依赖monitor对象只有在同步块或方法中才能调wait/notify等方法monitorexit 
 Lock是具体类(java.util.concurrent.Locks.Lock)是api层面的锁
 
-* 2.使用方法  
+* 2.使用方法 
 synchronized不需要用户去手动释放锁，当synchronized代码执 行完后系统会自动让线程释放对锁的占用；  ReentrantLock则需要用户去手动释放锁若没有主动释放锁，就有可能导致出现死锁现象。
 
-* 3.等待是否可中断  
-synchronized不可中断，除非抛出异常或者正常运行完成，ReentrantLock可中断，  
-1.设置超时方法tryLock(Long timeout， TimeUnit unit)  
-2.lockInterruptibly()放代码块中，调用interrupt() 方法可中断
+* 3.等待是否可中断 
+  synchronized不可中断，除非抛出异常或者正常运行完成，ReentrantLock可中断， 
 
-* 4.加锁是否公平  
+  1. 设置超时方法 tryLock(Long timeout， TimeUnit unit) 
+
+  2. lockInterruptibly() 放代码块中，调用interrupt() 方法可中断
+
+* 4.加锁是否公平 
 synchronized非公平锁
 Reentrantlock两者都可以，默认非公平锁，构造方法可以传入boolean值， true 为公平锁，false为非公平锁
 
-* 5.锁绑定多个条件Condition  
+* 5.锁绑定多个条件Condition 
 synchronized没有
 Reentrantlock用来实现分组唤醒得要唤醒的线程们，可以精确唤醒， 而不是像synchronized 要么随机唤醒一个线程，要么唤醒全部线程。
 
 ## 12.Callable接口
-带返回值的线程
-    
+创建带返回值的线程    
 ```java
 FutureTask result = new FutureTask<>(CallalbelImpl);//CallalbelImpl实现类
 new Thread(result).start();
