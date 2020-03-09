@@ -12,7 +12,7 @@ Java虚拟机提供的轻量级同步机制（synchronize），当多个线程�
 
 1. 内存**可见性**
 
-   内存可见性：当多个线程操作共享数据时，内存中数据彼此可见。
+   当多个线程操作共享数据时，内存中数据彼此可见。
 
 2. 不保证**原子性**
 
@@ -379,7 +379,7 @@ public ThreadPoolExecutor(int corePoolSize，//核心线程数
                           long keepAliveTime，//空闲线程存活时间
                           TimeUnit unit，//存活时间单位
                           BlockingQueue<Runnable> workQueue，//任务队列
-                          ThreadFactory threadFactory，//线程工程
+                          ThreadFactory threadFactory，//线程工厂
                           RejectedExecutionHandler handler//拒绝策略)
 {
     if (corePoolSize < 0 ||
@@ -457,15 +457,15 @@ try {
 1. CPU 密集型  
 	* CPU 密集：该任务需要大量的运算，而没有阻塞，CPU 一直全速运行。
 	* CPU 密集任务只有在真正的多核 CPU 上才可能得到加速(通过多线程)。  
-	* CPU 密集型任务配置尽可能少的线程数量减少线程切换：  
+	* CPU 密集型任务配置尽可能少的线程数量减少线程切换：
 	 **一般公式： CPU核数+1**
 
  	 CPU核数 = Runtime.getRuntime().availableProcessors()
 
-2. IO 密集型  
-IO 密集型，即该任务需要大量的 IO，即大量的阻塞。  
-在单线程上运行 IO 密集型的任务会导致浪费大量的CPU运算能力浪费在等待。  
-所以在 IO密集型任务中使用多线程可以大大的加速程序运行，即使在单核 CPU 上，这种加速主要就是利用了被浪费掉的阻塞时间。  
+2. IO 密集型
+IO 密集型，即该任务需要大量的 IO，即大量的阻塞。
+在单线程上运行 IO 密集型的任务会导致浪费大量的CPU运算能力浪费在等待。
+所以在 IO密集型任务中使用多线程可以大大的加速程序运行，即使在单核 CPU 上，这种加速主要就是利用了被浪费掉的阻塞时间。 
 由于 IO 密集型任务线程并不是一直在执行任务，则应配置尽可能多的线程，如：
 **CPU 核数\*2**
 
@@ -507,7 +507,7 @@ class DeadLockDemo implements  Runnable{
 
 ### 14.3 解决办法：
 * 查看进程：jps定位进程号 
-* jstack找到死锁查看
+* jstack 找到死锁查看
 
 ## 15.JVM
 
@@ -517,39 +517,38 @@ class DeadLockDemo implements  Runnable{
 
 #### 1.  程序计数器（ Program Counter Register ）
 
-​		程序计数器是一块较小的内存空间，他可以看作是**当前线程**所**执行**的**字节码的行号指示器**。字节码解释器工作时就是通过改变这个计数器的值来选取下一条需要执行的字节码指令，它是程序控制流的指示器，分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。这个内存区域为“**线程私有**”，每条线程都有一个独立的程序计数器。是唯一一个不会出现OOM的内存区域。
+程序计数器是一块较小的内存空间，他可以看作是**当前线程**所**执行**的**字节码的行号指示器**。字节码解释器工作时就是通过改变这个计数器的值来选取下一条需要执行的字节码指令，它是程序控制流的指示器，分支、循环、跳转、异常处理、线程恢复等基础功能都需要依赖这个计数器来完成。这个内存区域为“**线程私有**”，每条线程都有一个独立的程序计数器。是唯一 一个不会出现OOM的内存区域。
 
 #### 2.  Java虚拟机栈（ Java Virtual Machine Stack ）
 
-​		与程序计数器一样，Java虚拟机栈（Java Virtual Machine Stack）也是**线程私有**的，他的生命周期与线程相同。**虚拟机栈描述的是<font color="red">Java方法执行的线程内存模型</font>：每个方法执行的时候，Java虚拟机都会同步创建一个栈帧（Stack Frame） 用于存储局部变量、操作数栈、动态链接、方法出口等信息**。每一个方法被**调用直至执行完毕**的过程，就意味着一个栈帧在虚拟机栈中从**入栈到出栈**的过程。
+与程序计数器一样，Java虚拟机栈（Java Virtual Machine Stack）也是**线程私有**的，他的生命周期与线程相同。**虚拟机栈描述的是<font color="red">Java方法执行的线程内存模型</font>：每个方法执行的时候，Java虚拟机都会同步创建一个栈帧（Stack Frame） 用于存储局部变量、操作数栈、动态链接、方法出口等信息**。每一个方法被**调用直至执行完毕**的过程，就意味着一个栈帧在虚拟机栈中从**入栈到出栈**的过程。
 
 #### 3.  本地方法栈（ Navive Method Stacks ）
 
-​		本地方法栈和虚拟机栈所发挥的作用是非常相似的，其区别只有是虚拟机栈为虚拟机执行 Java 方法（字节码）服务，而**本地方法栈则是为虚拟机使用到的本地（ Native ）方法服务。**
+本地方法栈和虚拟机栈所发挥的作用是非常相似的，其区别只有是虚拟机栈为虚拟机执行 Java 方法（字节码）服务，而**本地方法栈则是为虚拟机使用到的本地（ Native ）方法服务。**
 
 #### 4.  Java 堆（ Java Heap ）
 
-​		Java堆（ Java Heap ）是**虚拟机所管理的内存中最大的一块**。Java 堆是被**所有线程共享**的一块内存区域，在虚拟机启动时创建。此内存区域的**唯一目的是存放对象实例**。
+Java堆（ Java Heap ）是**虚拟机所管理的内存中最大的一块**。Java 堆是被**所有线程共享**的一块内存区域，在虚拟机启动时创建。此内存区域的**唯一目的是存放对象实例**。
 
 #### 5.  方法区（ Method Area ）
 
-​		方法区（ Method Area ）与 Java 堆一样，是**各个线程共享的内存区域**，它用于**存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码缓存等数据**。虽然《 Java虚拟机规范 》中把方法区描述为堆的一个逻辑部分，但是它却有一个别名叫做 “非堆”（ No-Heap），目的是与Java堆区分开来。
+方法区（ Method Area ）与 Java 堆一样，是**各个线程共享的内存区域**，它用于**存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码缓存等数据**。虽然《 Java虚拟机规范 》中把方法区描述为堆的一个逻辑部分，但是它却有一个别名叫做 “非堆”（ No-Heap），目的是与Java堆区分开来。
 
 #### 6. 运行时常量池（ Runtime Constant Pool ）
 
-​		运行时常量池（ Runtime Constant Pool ）**是方法区的一部分**。Class 文件中除了有类的版本、字段、方法、接口等描述信息外，还有一项信息是**常量池表（Constant Pool Table ）**，**用于存放编译期生成的各种<font color="red">字面量与符号的引用</font>，这部分内容将在类加载后存放到方法区的运行时常量池中**。
+运行时常量池（ Runtime Constant Pool ）**是方法区的一部分**。Class 文件中除了有类的版本、字段、方法、接口等描述信息外，还有一项信息是**常量池表（Constant Pool Table ）**，**用于存放编译期生成的各种<font color="red">字面量与符号的引用</font>，这部分内容将在类加载后存放到方法区的运行时常量池中**。
 
 ### 15.1 JVM内存结构
 
 在jdk1.7中分为年轻代、年老代、永久区。
 
 * Young 年轻区（代）
-  Young区被划分为三部分，Eden区和两个大小严格相同的Survivor区，其中，Survivor区间中，某一时刻只有其中一个是被使用的，另外一个留做垃圾收集时复制对象用，在Eden区间变满的时候， GC就会将存活的对象移到空闲的Survivor区间中，根据JVM的策略，在经过几次垃圾收集后，任然存活于Survivor的对象将被移动
-  到Tenured区间。
+  Young区被划分为三部分，Eden区和两个大小严格相同的Survivor区，其中，Survivor区间中，某一时刻只有其中一个是被使用的，另外一个留做垃圾收集时复制对象用，在Eden区间变满的时候， GC就会将存活的对象移到空闲的Survivor区间中，根据JVM的策略，在经过几次垃圾收集后，任然存活于Survivor的对象将被移动到Tenured区间。
 * Tenured 年老区
     Tenured区主要保存生命周期长的对象，一般是一些老的对象，当一些对象在Young复制转移一定的次数以后，对象就会被转移到Tenured区，一般如果系统中用了application级别的缓存，缓存中的对象往往会被转移到这一区间。
 * Perm 永久区
-      Perm代主要保存class,method,filed对象，这部份的空间一般不会溢出，除非一次性 加载了很多的类，不过在涉及到热部署的应用服务器的时候，有时候会遇到 java.lang.OutOfMemoryError : PermGen space 的错误，造成这个错误的很大原因就有可能是每次都重新部署，但是重新部署后，类的class没有被卸载掉，这样就造成了大量的class对象保存在了perm中，这种情况下，一般重新启动应用服务器可以解决问题。
+   Perm代主要保存class,method,filed对象，这部份的空间一般不会溢出，除非一次性加载了很多的类，不过在涉及到热部署的应用服务器的时候，有时候会遇到 java.lang.OutOfMemoryError : PermGen space 的错误，造成这个错误的很大原因就有可能是每次都重新部署，但是重新部署后，类的class没有被卸载掉，这样就造成了大量的class对象保存在了perm中，这种情况下，一般重新启动应用服务器可以解决问题。
 * Virtual区：
       最大内存和初始内存的差值，就是Virtual区。
 
@@ -634,12 +633,9 @@ https://www.eclipse.org/mat/
 
 #### 15.2.5 jstack
 
-有些时候我们需要查看下jvm中的线程执行情况，比如，发现服务器的CPU的负载突然增
-高了、出现了死锁、死循环等，我们该如何分析呢？
-由于程序是正常运行的，没有任何的输出，从日志方面也看不出什么问题，所以就需要
-看下jvm的内部线程的执行情况，然后再进行分析查找出原因。
-这个时候，就需要借助于jstack命令了，jstack的作用是将正在运行的jvm的线程情况进
-行快照，并且打印出来：
+有些时候我们需要查看下jvm中的线程执行情况，比如，发现服务器的CPU的负载突然增高了、出现了死锁、死循环等，我们该如何分析呢？
+由于程序是正常运行的，没有任何的输出，从日志方面也看不出什么问题，所以就需要看下jvm的内部线程的执行情况，然后再进行分析查找出原因。
+这个时候，就需要借助于jstack命令了，**jstack的作用是将正在运行的jvm的线程情况进行快照**，并且打印出来：
 
 ```cmd
 Usage:
@@ -664,9 +660,9 @@ Options:
 
 #### 15.2.6 Java Visual JVM工具的使用
 
-1. 监控本地JVM
+1. 监控本地 JVM
 
-2. 监控远程JVM，需要借助JMX技术
+2. 监控远程 JVM，需要借助JMX技术
 
    JMX（Java Management Extensions，即Java管理扩展）是一个为应用程序、设备、系统等植入管理功能的框架。JMX可以跨越一系列异构操作系统平台、系统体系结构和网络传输协议，灵活的开发无缝集成的系统、网络和服务管理应用。
 
@@ -694,11 +690,7 @@ Options:
 
 ##### 15.3.1.1 引用计数
 
-有对象引用 引用计数加1无引用减1。不常用
-
-​		假设有一个对象A，任何一个对象对A的引用，那么对象A的引用计数器+1，当引用失败
-时，对象A的引用计数器就-1，如果对象A的计数器的值为0，就说明对象A没有引用，
-可以被回收。
+假设有一个对象A，任何一个对象对A的引用，那么对象A的引用计数器+1，当引用失败时，对象A的引用计数器就-1，如果对象A的计数器的值为0，就说明对象A没有引用，可以被回收。
 
 **优点：**
 * 实时性较高，无需等到内存不够的时候，才开始回收，运行时根据对象的计数器是否为0，就可以直接回收。
@@ -728,7 +720,7 @@ System.gc();
 
 ##### 15.3.1.2 可达性分析算法
 
-​		GC Roots 的根对象作为起始节点集，从这些节点开始根据引用关系向下搜索，搜索过程所走过的路径称为“引用链”（Reference Chain）,如果某个对象到 GC Roots间没有任何引用链相连，或者用图论的话就是从 GC Roots 到这个对象不可达时，则证明此对象不可能再被使用。
+GC Roots 的根对象作为起始节点集，从这些节点开始根据引用关系向下搜索，搜索过程所走过的路径称为“引用链”（Reference Chain）,如果某个对象到 GC Roots间没有任何引用链相连，或者用图论的话就是从 GC Roots 到这个对象不可达时，则证明此对象不可能再被使用。
 
 <img src="img/reachabilityAnalysis" style="zoom:80%;" />
 
@@ -782,7 +774,7 @@ MinorGC的过程( 复制>清空>互换)
 1. eden、 SurvivorFrom 复制到SurvivorTo，年龄+1
    首先，当Eden区满的时候会触发第一次GC,把还活着的对象拷贝到SurvivorFrom区，当Eden区再次触发GC的时候会扫描Eden区和From区域,对这两个区域进行垃圾回收，经过这次回收后还存活的对象，则直接复制到To区域(如果有对象的年龄已经达到了老年的标准，则赋值到老年代区)，同时把这些对象的年龄+1 。
 2. 清空eden、SurvivorFrom 然后，清空Eden和SurvivorFrom中的对象，也即复制之后有交换，谁空谁是To 
-3. SurvivorTo和SurvivorFrom互 换，原SurvivorTo成 为下一次GC时的SurvivorFrom区。部分对象会在From和To区域中复制来复制去，如此交换15次(由JVM参数MaxTenuringThreshold 决定，这个参数默认是15),最终如果还是存活，就存入到老年代。
+3. SurvivorTo和SurvivorFrom互 换，原SurvivorTo成 为下一次GC时的SurvivorFrom区。部分对象会在From和To区域中复制来复制去，如此交换15次(由JVM参数**MaxTenuringThreshold** 决定，这个参数默认是15),最终如果还是存活，就存入到老年代。
 
 ![img](img/copy)
 
@@ -809,7 +801,7 @@ MinorGC的过程( 复制>清空>互换)
 Object obj = new Object();
 ```
 
-​		当内存不足，JVM开始垃圾回收，**<font color="red">对于强引用的对象，只要强引用关系还存在，垃圾收集器就永远不会回收掉被引用的对象</font>**。
+当内存不足，JVM开始垃圾回收，**<font color="red">对于强引用的对象，只要强引用关系还存在，垃圾收集器就永远不会回收掉被引用的对象</font>**。
 强引用是我们最常见的普通对象引用。在Java中最常见的就是强引用，把一个对象赋给一个引用变量， 这个引用变量就是 一个强引用。当一个对象被强引用变量引用时，它处于可达状态，它是不可能被垃圾回收机制回收的，即使该对象以后永远都不会被用到JVM也不会回收。因此强引用是造成Java内存泄漏的主要原因之一。 
 ​		对于一个普通的对象，如果没有其他的引用关系，只要超过了引用的作用域或者显式地将相应(强)引用赋值为null,一般认为就是可以被垃圾收集的了(当然具体回收时机还是要看垃圾收集策略)。
 
@@ -907,25 +899,28 @@ System.out.println(referenceQueue.poll());//java.lang.ref.PhantomReference@74a14
 					  显示所有与区域设置相关的设置并继续
 	```
 	
-* **XX参数**（使用率较高）
-	
-	* Boolean类型 **XX:+/开启（关闭）参数** 如：XX:+PrintGCDetails
-	* KV设值类型 **XX:属性Key=属性value**  如：XX:MetaspaceSize=128m
+* **XX参数**（使用率较高）	
 
-### 17.2查看配置参数命令：
+	Boolean类型 **XX:+/开启（关闭）参数** 如：XX:+PrintGCDetails
+
+	K-V设值类型 **XX:属性Key=属性value**  如：XX:MetaspaceSize=128m
+
+### 17.2 查看配置参数命令：
 
 #### 17.2.1 查看参数第一种方法
 - 查看具体参数配置：jinfo -flag 参数名 进程号
 - 显示所有配置：jinfo -flags 进程号  
 - 两个重要参数：  
-	* **Xms**:初始堆内存等价于（XX:InitialHeapSize）  
-	* **Xmx**:最大堆内存等价于（XX:MaxHeapSize）
+
+  **Xms**:初始堆内存等价于（XX:InitialHeapSize）  
+
+  **Xmx**:最大堆内存等价于（XX:MaxHeapSize）
 
 #### 17.2.2 查看参数第二种方法
 - 初始参数：java XX:+PrintFlagsInitial
 - 修改后参数：java XX:+PrintFlagsFinal
 - 运行时加的参数：java XX:+PrintFlagsFinal XX:MetaspaceSize=521m Test
-- 查看默认垃圾收集器：java XX:+PrintCommandLineFlags version
+- 查看默认垃圾收集器：java XX:+PrintCommandLineFlags 
 
 参数符号说明：“:=” 是修改后的参数值而普通“=”是初始参数
 ### 17.3 常用参数
@@ -940,7 +935,9 @@ System.out.println(referenceQueue.poll());//java.lang.ref.PhantomReference@74a14
 #### 17.3.5  XX:+MetaspaceSize
 设置元空间大小，元空间的本质和永久代类似，都是对JVM规范中方法区的实现，不过**元空间与永久代之间最大的区别在于**：**元空间并不在虚拟机中，而是使用本地内存**。因此，默认情况下，元空间的大小仅受本地内存限制。 
 
+```  shell
 Xms128m Xmx4096m Xss1024k XX: MetaspaceSize=512m XX: PrintCommandLineFlags XX:+PrintGCDetails XX:+UseSeria1GC
+```
 
 #### 17.3.6  XX:+PrintGCDetails
 打印垃圾回收日志 
@@ -962,13 +959,15 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space at interv
 
 ![](img/%E5%A0%86%E7%9A%84%E7%BB%93%E6%9E%84.jpg)
 
+
 设置新生代中eden和S0/S1空间的比例 
-默认: XX:SurvivorRatio=8,Eden:S0:S1=8:1:1  
-例如：XX:SurvivorRatio=4,Eden:S0:S1=4:1:1  
+		默认: XX:SurvivorRatio=8,Eden:S0:S1=8:1:1 
+		例如：XX:SurvivorRatio=4,Eden:S0:S1=4:1:1 
 SurvivorRatio值设置eden区比例占多少，S0/S1相同
 
 **Heap 新生代堆空间（1/3）老年代堆空间（2/3）** 
-```shell
+
+```powershell
 PSYoungGen total 2560K, used 126K [0x00000000ffd00000, 0x0000000100000000, 0x0000000100000000)
   eden space 2048K, 6% used [0x00000000ffd00000,0x00000000ffd1f9b0,0x00000000fff00000)  
   from space 512K, 0% used [0x00000000fff00000,0x00000000fff00000,0x00000000fff80000)  
@@ -979,11 +978,11 @@ PSYoungGen total 2560K, used 126K [0x00000000ffd00000, 0x0000000100000000, 0x000
   class space    used 379K, capacity 388K, committed 512K, reserved 1048576K
 ```
 **MinorGC的过程( 复制>清空>互换) ** 
-**1: eden、 SuryivorFrom复制到SuryivorTo， 年龄+1**  
-首先，当Eden区满的时候会触发第一 次GC,把还活着的对象拷贝到SurvivorFrom区， 当Eden区再次触发GC的时候会扫描Eden区和From区域,对这两个区域进行垃圾回收，经过这次回收后还存活的对象,则直接复制到To区域(如果有对象的年龄已经达到了老年的标准，则赋值到老年代区)，同时把这些对象的年龄+1  
-**2:清空eden、SurvivorFrom**  
-然后，清空Eden和SurvivorFrom中的对象，也即复制之后有交换，谁空谁是to  
-**3: SurvivorTo和 SurvivorFrom 互换**  
+**1: eden、 SuryivorFrom复制到SuryivorTo， 年龄+1** 
+首先，当Eden区满的时候会触发第一 次GC,把还活着的对象拷贝到SurvivorFrom区， 当Eden区再次触发GC的时候会扫描Eden区和From区域,对这两个区域进行垃圾回收，经过这次回收后还存活的对象,则直接复制到To区域(如果有对象的年龄已经达到了老年的标准，则赋值到老年代区)，同时把这些对象的年龄+1 
+**2:清空eden、SurvivorFrom** 
+然后，清空Eden和SurvivorFrom中的对象，也即复制之后有交换，谁空谁是to 
+**3: SurvivorTo和 SurvivorFrom 互换** 
 最后，SurvivorTo和SurvivorFrom互换，原SurvivorTo成为 下次GC时的SurvivorFrom区。部分对象会在From和To区域中复制来复制去，如此交换15次(由JVM参数axTenuringThreshold决定.这个参数默认是15.最终如果还是存活.就在入到老年代。
 
 #### 17.3.8 XX:NewRatio
@@ -995,14 +994,14 @@ XX:NewRatio=4 新生代占1,老年代4，年轻代占整个堆的1/5
 NewRatio值就是设置老年代的占比，剩下的1给新生代
 
 #### 17.3.9 XX:MaxTenuringThreshold 
-设置垃圾最大年龄：XX:MaxTenuringThreshold=0；默认:15，值为015 
+设置垃圾最大年龄：XX:MaxTenuringThreshold=0；默认:15 
 如果设置为0的话，则年轻代对象不经过Survivor区，直接进入年老代。对于年老代比较多的应用，可以提高效率。如果将此值设置为一个较大值，则年轻代对象会在Survivor区进行多次复制，这样可以增加对象再年轻代的存活时间，增加在年轻代即被回收的概论。
 
 ## 19 OOM
 
 ### 19.1 java.lang.StackOverflowError
 
-管运行   ，递归调用时。
+管运行 ，递归调用时。
 
 ```java
 public static void stackOverflow() {
@@ -1040,9 +1039,9 @@ Exception in thread "main" java.lang.OutOfMemoryError: Java heap space
 xx : MaxDirectMemorysize= 5m  
 
 * GC回收时间过长时会抛出OutOfMemroyError，**超过98%的时间用来做GC并且回收了不到2%的堆内存**
-* 连续多次GC都只回收了不到2%的极端情况下才会抛出。假如不抛出GC overhead limit 错误会发生什么停况呢?
+* 连续多次GC都只回收了不到2%的极端情况下才会抛出。假如不抛出GC overhead limit 错误会发生什么情况呢？
 * 那就是GC清理的这么点内存很快会再次填满，迫使GC再次执行.这样就形成恶性循环,
-* CPU使用率直是100%， 而GC 却没有任何成果
+* CPU使用率值是100%， 而GC 却没有任何成果
 
 #### 19.2.2 java.lang.OutOfMemoryError：Direct buffer memory  
 
@@ -1077,7 +1076,7 @@ Exception in thread "main" java.lang.OutOfMemoryError: Direct buffer memory
 高并发请求服务器时，准确的讲native thread异常与对应的平台有关
 导致原因:
 
-  1. 你的应用创建 了太多线程了，一个应用进程创建多个线程,超过系统承裁极限；
+  1. 你的应用创建了太多线程了，一个应用进程创建多个线程,超过系统承裁极限；
     
   2. 你的服务器并不允许你的应用程序创建这么多线程, linux系统默认允许单个进程可以创建的线程数是1024个，你的应用创建超过这个数量,就会报**java. lang. OutOfMemoryError: unable to create new native thread**
 
@@ -1128,7 +1127,6 @@ GC算法（引用计数/复制/标记清除/标记整理）是内存回收的方
 串行垃圾收集器，是指使用单线程进行垃圾回收，垃圾回收时，只有一个线程在工作，并且java应用中的所有线程都要暂停，等待垃圾回收的完成。这种现象称之为STW（Stop-The-World）。 所以不适合服务器环境。它最适合单处理器计算机，因为它不能利用多处理器硬件，它在多处理器上对数据集较小（最大约100 MB）的应用很有用，因此Serial垃圾收集器依然是java虚拟机运行在Client模式下默认的新生代垃圾收集器。
 
 ![SerialGC](img%5CSerialGC.jpg)
-
 ```JVM参数：XX:+UseSerialGC ```
 
 开启后默认使用：Serial（Young区） + Serial Old（Old区）
@@ -1543,10 +1541,9 @@ follow，关注你感兴趣的作者，会收到他们的动态.
 #### 24.2.1 in限制搜索范围
 
 公式：xxx关键词in:name或description或readme
-
-xxx in:name项目名包含xx的
-xxx in:description项目描述包含xx的
-xxx in:readme项目的readme文件中包含xx的
+		xxx in:name项目名包含xx的
+		xxx in:description项目描述包含xx的
+		xxx in:readme项目的readme文件中包含xx的
 
 组合使用：xxx in:name,description,readme
 
@@ -1596,7 +1593,7 @@ Git教程：[Git教程廖雪峰官网](https://www.liaoxuefeng.com/wiki/89604348
 
 ## 25 NIO
 
- Java NIO (New IO Non Blocking IO) 是从Java 1.4版本开始引入的一-个新的IO API，可以替代标准的Java IO API。NIO与原来的IO有同样的作用和目的，但是使用的方式完全不同，**NIO支持面向缓冲区的、基于通道的I0操作**。NIO将以更加高效的方式进行文件的读写操作。
+ Java NIO (New IO Non Blocking IO) 是从Java 1.4版本开始引入的一 一个新的IO API，可以替代标准的Java IO API。NIO与原来的IO有同样的作用和目的，但是使用的方式完全不同，**NIO支持面向缓冲区的、基于通道的I0操作**。NIO将以更加高效的方式进行文件的读写操作。
 
 IO与NIO区别：
 
@@ -1608,7 +1605,7 @@ IO与NIO区别：
 
 ### 25.1 通道和缓冲区
 
-Java NIO系统的核心在于:通道(Channel)和缓冲区(Buffer)。通道表示打开到I0设备(例如:文件、套接字)的连接。若需要使用NIO系统，需要获取用于连接I0设备的通道以及用于容纳数据的缓冲区。然后操作缓冲区，对数据进行处理。
+Java NIO系统的核心在于:通道(Channel)和缓冲区(Buffer)。通道表示打开到IO设备(例如:文件、套接字)的连接。若需要使用NIO系统，需要获取用于连接IO设备的通道以及用于容纳数据的缓冲区。然后操作缓冲区，对数据进行处理。
 
 **Channel 负责传输，Buffer 负责存储**
 
@@ -1617,7 +1614,6 @@ Java NIO系统的核心在于:通道(Channel)和缓冲区(Buffer)。通道表示
 在Java NIO中负责数据的存取。缓冲区就是数组。用于存储不同数据类型的数据。
 
 根据数据类型（除了Boolean）的不同，提供了相应的缓冲区。管理方式基本一致，通过allocate()获取缓冲区。
-
 ByteBuffer
 CharBuffer
 LongBuffer
@@ -1702,15 +1698,9 @@ java.nio.HeapByteBuffer[pos=0 lim=5 cap=1024]
 
 **处理过程**：物理磁盘—>内核地址空间（缓存）—>用户地址空间（缓存）—>应用程序
 
-**直接缓冲区**：通过调用此类的allocateDirect()厂方法来创建。此方法返回的**缓冲区进行分配和取消**
-**分配所需成本通常高于非直接缓冲区**。直接缓冲区的内容可以驻留在常规的垃圾回收堆之外，因此，它们对
-应用程序的内存需求量造成的影响可能并不明显。所以，建议将直接缓冲区主要分配给那些易受基础系统的
-本机I/0操作影响的大型、持久的缓冲区。一般情况下，最好仅在直接缓冲区能在程序性能方面带来明显好
-处时分配它们。
-直接字节缓冲区还可以通过**FileChannel的map()方法**将文件区域直接映射到内存中来创建。该方法返回
-**MappedByteBuffer**。Java平台的实现有助于通过JNI从本机代码创建直接字节缓冲区。如果以上这些缓冲区
-中的某个缓冲区实例指的是不可访问的内存区域，则试图访间该区域不会更改该缓冲区的内容，并且将会在
-访问期间或稍后的某个时间导致抛出不确定的异常。
+**直接缓冲区**：通过调用此类的allocateDirect()厂方法来创建。此方法返回的**缓冲区进行分配和取消，分配所需成本通常高于非直接缓冲区**。直接缓冲区的内容可以驻留在常规的垃圾回收堆之外，因此，它们对应用程序的内存需求量造成的影响可能并不明显。所以，建议将直接缓冲区主要分配给那些易受基础系统的本机I/0操作影响的大型、持久的缓冲区。一般情况下，最好仅在直接缓冲区能在程序性能方面带来明显好处时分配它们。
+
+直接字节缓冲区还可以通过**FileChannel的map()方法**将文件区域直接映射到内存中来创建。该方法返回**MappedByteBuffer**。Java平台的实现有助于通过JNI从本机代码创建直接字节缓冲区。如果以上这些缓冲区中的某个缓冲区实例指的是不可访问的内存区域，则试图访间该区域不会更改该缓冲区的内容，并且将会在访问期间或稍后的某个时间导致抛出不确定的异常。
 
 **处理过程**：物理磁盘—>物理内存映射文件—>应用程序
 
@@ -1727,9 +1717,9 @@ DMA（直接存储器）—>Channel（通道）
 #### 25.2.1 主要实现类
 
 FileChannel
-SocketChannel
-ServerSocketChannel
-DatagramChannel    
+		SocketChannel
+		ServerSocketChannel
+		DatagramChannel    
 
 #### 25.2.2 获取通道
 
@@ -1812,7 +1802,7 @@ outChannel.close();
 inChannel.close();
 ```
 
-#### 25.2.5 分散（Scatter）于聚集（Gather）
+#### 25.2.5 分散（Scatter）与聚集（Gather）
 
 **分散读取**：将通道（Channel）中的数据按顺序分散到多个缓冲区（Buffer）中；
 
@@ -1911,7 +1901,7 @@ void server() throws Exception {
 ```
 * 非阻塞模式
 
-  ```java
+```java
   @Test
   public void client() throws Exception {
   	// 1.获取通道
@@ -1979,12 +1969,12 @@ void server() throws Exception {
   	serverChannel.close();
   
   }
-  ```
+```
 
 
 * DatagramChannel 发送UDP包的通道
 
-  ```java
+```java
   @Test
   public void send() throws Exception {
   	DatagramChannel dc = DatagramChannel.open();
@@ -2030,7 +2020,7 @@ void server() throws Exception {
   		it.remove();
   	}
   }
-  ```
+```
 
 ##### 25.2.7.2 管道（Pipe）
 
