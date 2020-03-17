@@ -686,6 +686,14 @@ Hystrix是一个用于处理分布式系统的**延迟和容错**的开源库, �
 
 * 服务熔断
 
+	**熔断机制**是应对雪崩效应的一-种微服务链路保护机制。当扇出链路的某个微服务出错不可用或者响应时间太长时,会进行服务的降级，进而熔断该节点微服务的调用，快速返回错误的响应信息。
+
+	**当检测到该节点微服务调用响应正常后，恢复调用链路。**
+
+	**服务熔断-》服务降级-》恢复调用链路**
+
+	在Spring Cloud框架里,熔断机制通过Hystrix实现。Hystrix会监控微服务间调用的状况,当失败的调用到一定阈值,缺省是5秒内20次调用失败,就会启动熔断机制。熔断机制的注解是@HystrixCommand.
+
 * 服务限流
 
 ## 3.2 示例
@@ -813,11 +821,154 @@ String timeout2() {
 }
 ```
 
-### 3.3 设置默认降级处理
+### 3.2.3 设置默认降级处理
 
 ```java
 @DefaultProperties(defaultFallback="timeout2")
 @RestController
 public class TicketController
 ```
+
+### 3.2.4 服务降级-fallback
+
+实现FeignClien接口：
+
+```java
+@FeignClient(value = "hystrix-client",fallback = FallBackServiceImpl.class)
+public interface TicketService {
+
+    @GetMapping("/ticket/get")
+     String ticket();
+
+    @GetMapping("/ticket/timeout")
+     String timeout();
+}
+@Component
+public class FallBackServiceImpl implements TicketService {
+    @Override
+    public String ticket() {
+        return "ticket fallback";
+    }
+
+    @Override
+    public String timeout() {
+        return "timeout fallback";
+    }
+}
+```
+
+### 3.2.5 服务熔断
+
+#### 3.2.5.1 实现
+
+```java
+   @HystrixCommand(fallbackMethod="timeout3",commandProperties={
+   @HystrixProperty(name= "circuitBreaker.enable",value="true"),// 是否开启断路器
+            @HystrixProperty(name="circuitBreaker.requestVolumeThreshold",value="10"),//请求次数
+            @HystrixProperty(name="circuitBreaker.sleepWindowInMilliseconds",value="10000"),//时间窗口期
+            @HystrixProperty(name="circuitBreaker.errorThresholdPercentage",value="60")// 失败率达到多少后跳闸
+    })
+    //具体属性在HystrixCommandProperties类中
+    public String timeout(){
+        try {
+            TimeUnit.SECONDS.sleep(5);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "timeout5秒";
+    }
+```
+
+涉汲到断路器的三个重要参数:**快照时间窗、请求总数阀值、错误百分比阀值。**
+
+1. 快照时间窗:断路器确定是否打开需要统计一些请求和错误数据， 而统计的时间范围就是快照时间窗，默认为最近的10秒。
+
+2. 请求总数阀值:在快照时间窗内，必须满足请求总数阀值才有资格熔断。默认为20,意味着在10秒内,如果该hystrix命令的调用次数不足20次,
+	即使所有的请求都超时或其他原因失败，断路器都不会打开。
+
+3. 错误百分比阀值:当请求总数在快照时间窗内超过了阀值,比如发生了30次调用，如果在这30次调用中，有15次发生了超时异常,也就是超过
+	50%的错误百分比,在默认设定50%阀值情况下，这时候就会将断路器打开。
+
+#### 3.2.5.2: 服务熔断类型
+
+* 熔断打开
+	请求不再进行调用当前服务，内部设置时钟一般为MTTR (平均故障处理时间)，当打开时长达到所设时钟则进入半熔断状态
+
+* 熔断关闭
+	熔断关闭不会对服务进行熔断
+
+* 熔断半开
+	部分请求根据规则调用当前服务，如果请求成功且符合规则则认为当前服务恢复正常，关闭熔断
+
+https://github.com/Netflix/Hystrix/wiki/How-it-Works
+
+
+
+![](img/hystrix-command-flow-chart.png)
+
+## 3.3 Hystrix dashboard
+
+在pom.xml中引入jar
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-hystrix-dashboard</artifactId>
+    <version>2.2.2.RELEASE</version>
+</dependency>
+
+
+```
+
+主启动类中加入@EnableHystrixDashboard
+
+# 4.服务网关
+
+## 4.1 zuul
+
+### 4.2 Gateway
+
+Gateway是zull1.x 的替代
+
+SpringCloud Gateway是Spring Cloud的一个全新项目，于Spring 5.0+ Spring Boot 2.0和Project Reactor等技术开发的网关，它旨在为微服务架构提供一种简单有效的统一的API路由管理方式。
+SpringCloud Gateway作为Spring Cloud生态系统中的网关,目标是替代Zuul, 在Spring Cloud 2.0以上版本中，没有对新版本的Zuul 2.0以上最新高性能版本进行集成，仍然还是使用的Zuul 1.x非Reactor模式的老版本。而为了提升网关的性能，SpringCloud Gateway是基于WebFlux框架实现的，而WebFlux框架底层则使用了高性能的eactor模式通信框架Netty。
+Spring Cloud Gateway的目标提供统一 的路由方式且基于Filter链的方式提供了网关基本的功能，例如:安全，监控/指标,和限流。
+
+#### **4.2.1 基本概念**：
+
+* Route（路由）
+
+	路由是构建网关的基本模块，它由ID，目标URI, 一系列的断言和过滤器组成，如果断言为true则匹配该路由
+
+* Predicate（断言）
+
+	参考的是Java8的java.util.function.Predicate
+	开发人员可以匹配HTTP请求中的所有内容(例如请求头或请求参数)，如果请求与断言相匹配则进行路由
+
+* Filter（过滤）
+
+	指的是Spring框架中GatewayFilter的实例， 使用过滤器，可以在请求被路由前或者之后对请求进行修改。
+
+#### 4.2.2 Spring Cloud Gateway功能：
+
+- 基于Spring Framework 5，Project Reactor和Spring Boot 2.0构建
+- 能够匹配任何请求属性上的路由。
+- 断言和过滤具体路由。
+- Hystrix断路器集成。
+- Spring Cloud DiscoveryClient集成
+- 容易编写的断言和过滤器
+- 请求速率限制
+- 路径改写
+
+#### 4.2.3 工作流程：
+
+客户端向Spring Cloud Gateway发出请求。如果网关处理程序映射确定请求与路由匹配，则将其发送到网关Web处理程序。该处理程序通过特定于请求的过滤器链来运行请求。筛选器由虚线分隔的原因是，筛选器可以在发送代理请求之前和之后运行逻辑。所有“前置”过滤器逻辑均被执行。然后发出代理请求。发出代理请求后，将运行“后”过滤器逻辑。
+
+![](img/spring_cloud_gateway_diagram.png)
+
+# 5.服务配置
+
+
+
+# 6.服务总线
 
