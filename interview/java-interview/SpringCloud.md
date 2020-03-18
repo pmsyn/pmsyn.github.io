@@ -962,9 +962,94 @@ Spring Cloud Gateway的目标提供统一 的路由方式且基于Filter链的�
 
 #### 4.2.3 工作流程：
 
-客户端向Spring Cloud Gateway发出请求。如果网关处理程序映射确定请求与路由匹配，则将其发送到网关Web处理程序。该处理程序通过特定于请求的过滤器链来运行请求。筛选器由虚线分隔的原因是，筛选器可以在发送代理请求之前和之后运行逻辑。所有“前置”过滤器逻辑均被执行。然后发出代理请求。发出代理请求后，将运行“后”过滤器逻辑。
+客户端向Spring Cloud Gateway发出请求。如果网关处理程序映射确定请求与路由匹配，则将其发送到网关Web处理程序。该处理程序通过特定于请求的过滤器链来运行请求。筛选器由虚线分隔的原因是，筛选器可以在发送代理请求之前和之后运行逻辑。所有“前置”过滤器逻辑均被执行。然后发出代理请求。发出代理请求后，将运“后”过滤器逻辑。
 
 ![](img/spring_cloud_gateway_diagram.png)
+
+#### 4.2.4 具体实现
+
+配置路由：
+
+1. 通过yaml
+
+	```yaml
+	 cloud:
+	    gateway:
+	      routes:
+	#        路由ID
+	        - id : route
+	#        匹配后提供服务的路由地址
+	          uri: http://localhost:8081
+	#        断言，路径匹配则路由
+	          predicates:
+	            - Path=/ticket/get
+	```
+
+	
+
+2. 通过配置类
+
+	```java
+	 @Configuration
+	public class GatewayConfig {
+	    @Bean
+	    public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
+	        return builder.routes()
+	                .route("path_route", r -> r.path("/get")
+	                        .uri("http://httpbin.org"))
+	                .route("host_route", r -> r.host("*.myhost.org")
+	                        .uri("http://httpbin.org"))
+	                .route("rewrite_route", r -> r.host("*.rewrite.org")
+	                        .filters(f -> f.rewritePath("/foo/(?<segment>.*)", "/${segment}"))
+	                        .uri("http://httpbin.org"))
+	                .route("hystrix_route", r -> r.host("*.hystrix.org")
+	                        .filters(f -> f.hystrix(c -> c.setName("slowcmd")))
+	                        .uri("http://httpbin.org"))
+	                .route("hystrix_fallback_route", r -> r.host("*.hystrixfallback.org")
+	                        .filters(f -> f.hystrix(c -> c.setName("slowcmd").setFallbackUri("forward:/hystrixfallback")))
+	                        .uri("http://httpbin.org"))
+	                .build();
+	    }
+	}
+	```
+
+动态路由：
+
+```yaml
+server:
+  port: 9999
+eureka:
+  instance:
+    hostname: gateway-service
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8001/eureka
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          #          开启动态路由
+          enabled: true
+      routes:
+        - id: route
+          uri: lb://hystrix-client
+          predicates:
+           - Path=/ticket/get
+           
+```
+
+测试通过网关访问：http://localhost:9999/ticket/get
+
+
+
+
+
+
 
 # 5.服务配置
 
