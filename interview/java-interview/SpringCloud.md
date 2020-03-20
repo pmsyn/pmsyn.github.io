@@ -1,6 +1,6 @@
 <h1 style="text-align:center">SpringCloud</h1>
 
-
+![](img/diagram-microservices-88e01c7d34c688cb49556435c130d352.svg)
 
 # 1.服务注册与发现
 
@@ -926,7 +926,7 @@ https://github.com/Netflix/Hystrix/wiki/How-it-Works
 
 ## 4.1 zuul
 
-### 4.2 Gateway
+## 4.2 Gateway
 
 Gateway是zull1.x 的替代
 
@@ -934,7 +934,7 @@ SpringCloud Gateway是Spring Cloud的一个全新项目，于Spring 5.0+ Spring 
 SpringCloud Gateway作为Spring Cloud生态系统中的网关,目标是替代Zuul, 在Spring Cloud 2.0以上版本中，没有对新版本的Zuul 2.0以上最新高性能版本进行集成，仍然还是使用的Zuul 1.x非Reactor模式的老版本。而为了提升网关的性能，SpringCloud Gateway是基于WebFlux框架实现的，而WebFlux框架底层则使用了高性能的eactor模式通信框架Netty。
 Spring Cloud Gateway的目标提供统一 的路由方式且基于Filter链的方式提供了网关基本的功能，例如:安全，监控/指标,和限流。
 
-#### **4.2.1 基本概念**：
+### **4.2.1 基本概念**：
 
 * Route（路由）
 
@@ -949,7 +949,7 @@ Spring Cloud Gateway的目标提供统一 的路由方式且基于Filter链的�
 
 	指的是Spring框架中GatewayFilter的实例， 使用过滤器，可以在请求被路由前或者之后对请求进行修改。
 
-#### 4.2.2 Spring Cloud Gateway功能：
+### 4.2.2 Spring Cloud Gateway功能：
 
 - 基于Spring Framework 5，Project Reactor和Spring Boot 2.0构建
 - 能够匹配任何请求属性上的路由。
@@ -960,13 +960,13 @@ Spring Cloud Gateway的目标提供统一 的路由方式且基于Filter链的�
 - 请求速率限制
 - 路径改写
 
-#### 4.2.3 工作流程：
+### 4.2.3 工作流程：
 
 客户端向Spring Cloud Gateway发出请求。如果网关处理程序映射确定请求与路由匹配，则将其发送到网关Web处理程序。该处理程序通过特定于请求的过滤器链来运行请求。筛选器由虚线分隔的原因是，筛选器可以在发送代理请求之前和之后运行逻辑。所有“前置”过滤器逻辑均被执行。然后发出代理请求。发出代理请求后，将运“后”过滤器逻辑。
 
 ![](img/spring_cloud_gateway_diagram.png)
 
-#### 4.2.4 具体实现
+### 4.2.4 具体实现
 
 配置路由：
 
@@ -1047,11 +1047,17 @@ spring:
 
 
 
-
-
-
-
 # 5.服务配置
+
+![image-20200320173135912](img/springcloudconfig.png)
+
+## 5.1 SpringCloud Config
+
+SpringCloud Config为微服务架构中的微服务提供集中化的外部配置支持，配置服务器**为各个不同微服务应用**的所有环境提供了一个**中心化的外部配置**。
+
+
+
+
 
 
 
