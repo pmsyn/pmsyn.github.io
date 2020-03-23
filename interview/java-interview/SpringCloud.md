@@ -1055,11 +1055,454 @@ spring:
 
 SpringCloud Config为微服务架构中的微服务提供集中化的外部配置支持，配置服务器**为各个不同微服务应用**的所有环境提供了一个**中心化的外部配置**。
 
+### 5.1.1 环境搭建
+
+#### 5.1.1.1 config center
+
+pom.xml
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-config-server</artifactId>
+    <version>2.2.2.RELEASE</version>
+</dependency>
+
+```
+
+application.yml
+
+```yaml
+server:
+  port: 8088
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+      #          git地址
+          uri: https://github.com/pengmengsheng/SpringCloud.git
+      #         搜索目录
+          search-paths: SpringCloud
+      #     读取分支
+      label: master
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8001/eureka
+
+```
+
+#### 5.1.1.2 config client
+
+pom.xml
+
+```xml
+<dependency>
+	<groupId>org.springframework.cloud</groupId>
+	<artifactId>spring-cloud-starter-config</artifactId>
+</dependency>
+```
+
+application.yml
+
+```yaml
+server:
+  port: 80
+spring:
+  application:
+    name: config-client
+  cloud:
+    config:
+#      分支名称
+      #      配置文件名称
+      name: config
+      #      配置中心地址
+      profile: test
+      label: master
+      uri: http://localhost:8088
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8001/eureka
+```
 
 
 
+### 5.1.2 读取配置规则
+
+```
+/ {application} / {profile} [/ {label}]
+/{application}-{profile}.yml
+/{label}/{application}-{profile}.yml
+/{application}-{profile}.properties
+/{label}/{application}-{profile}.properties
+```
+
+### 5.1.3 动态刷新配置
+
+pom.xml
+
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+```
+
+application.yml
+
+```yaml
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+```
+
+controller
+
+```java
+@RestController
+@RefreshScope
+public class IndexController
+
+```
+
+发送post请求
+
+curl -X post "http://localhost/actuator/refresh"
+
+# 6.服务(消息)总线
+
+**什么是总线**
+在微服务架构的系统中，通常会使用**轻量级的消息代理**来构建一个**共用的消息主题**， 并让系统中所有微服务实例都连接上来。由于**该主题中产生的消息会被所有实例监听和消费，所以称它为消息总线**。在总线上的各个实例，都可以方便地广播-些需要让其他连接在该主题 上的实例都知道的消息。
+**基本原理**
+ConfigClient实例都监听MQ中同-个topic(默认是springCloudBus)。当-一个服务刷新数据的时候，它会把这个信息放入到Topic中，这样其它监听同一Topic的服务就能得到通知，然后去更新自身的配置。
+
+## 6.1 消息通知方式
+
+1. 利用消息总线触发一个客户端/bus/refresh,而刷新所有客户端的配置口
+
+2. 利用消息总线触发一个服务端ConfigServer的/bus/refresh端点，而刷新所有客户端的配置
 
 
 
-# 6.服务总线
+## 6.2 动态刷新所有通知
+
+### 6.2.1 安装rabbitmq
+
+### 6.2.2 配置消息中心
+
+pom.xml
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-bus-amqp</artifactId>
+    <version>2.2.1.RELEASE</version>
+</dependency>
+
+```
+
+application.yml
+
+```yaml
+server:
+  port: 8088
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/pengmengsheng/SpringCloud.git
+
+          search-paths: SpringCloud
+
+          skipSslValidation: true
+      #     读取分支
+      label: master
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8001/eureka
+
+# rabbitmq
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+#  暴露bus-refresh刷新端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "bus-refresh"
+```
+
+
+
+### 6.2.3 配置消息客户端
+
+pom中加入spring-cloud-starter-bus-amqp
+
+application.yml
+
+```yaml
+server:
+  port: 8089
+spring:
+  application:
+    name: cofig-client8089
+  cloud:
+    config:
+      uri: http://localhost:8088
+      #      配置文件名称
+      name: config
+      profile: test
+      label: master
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8001/eureka
+  # rabbitmq
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+```
+
+### 6.2.4 刷新消息服务中心
+
+curl -X post "http://localhost:8088/actuator/bus-refresh"
+
+## 6.3 定点通知
+
+格式: http://localhost:配置中心的端口号/actuator/bus-refresh/ {destination}
+/bus/refresh请求不再发送到具体的服务实例上,而是发给config server并通过destination参数类指定需要更新配置的服务或实例。
+
+curl -X post "http://localhost:8088/actuator/bus-refresh/cofig-client8089:8809"
+
+## 6.4 工作流程
+
+![image-20200322145053777](img/cloud-bus.png)
+
+# 7. SpringCloud Stream
+
+消息驱动：屏蔽底层消息中间件的差异，降低切换成本，统一消息的编程模型。
+
+一个Spring Cloud Stream应用程序由一个核心的消息中间件构成，通过Spring Cloud Stream实现应用程序与外部输入、输出通道之间的通信，通过通道实现特定的中间件绑定器和外部代理的连接。
+
+![SCSt with binder](img/springcloudstream.png)
+
+核心模块：
+
+* **Destination Binders**：负责与外部消息系统集成
+* **Destination Bindings**：绑定外部消息系统和应用程序提供的生产者和消费者。
+* **Message 消息**：生产者和消费者与Destination Binders 之间通信的数据结构。
+
+通过定义绑定器Binder作为中间层，实现了应用程序与消息中间件细节之间的隔离。
+
+![image-20200323141443096](img/programmodel.png)
+
+## 7.1 RabbitMQ
+
+### 7.1.1 基本概念
+
+* **Exchange**
+
+	交换器，用来接收生产者发送的消息并将这些消息路由给服务器中的队列。
+
+	Exchange有4种类型: 
+
+	* **direct(默认)**
+
+	* **fanout**
+
+	* **topic**
+
+	* **headers**
+
+* **Queue**
+
+	消息队列，用来保存消息直到发送给消费者。它是消息的容器。也是消息的终点。一个消息可投入一个或多个队列。消息一直在队列里面，等待消费者连接到这个队列将其取走。
+
+* **Binding**
+
+	绑定，用于消息队列和交换器之间的关联。一个绑定就是基于路由键将交换器和消息队列连接起来的路由规则，所以可以将交换器理解成一个由绑定构成的路由表。
+	Exchange和Queue的绑定可以是多对多的关系。
+
+* **Connection**
+
+	网络连接，比如一个TCP连接。
+
+* **Channel**
+
+	信道，多路复用连接中的一条独立的双向数据流通道。信道是建立在真实的TCP连接内的虚拟连接、AMQP命令都是通过信道发出去的，不管是发布消息些动作都是通过信道完成。因为对于操作系统来说建立和销毁TCP都是非常昂贵的开销，所以引入了信道的概念，以复用一条TCP连接。
+
+* **Virtual Host**
+	虚拟主机，表示一批交换器、消息队列和相关对象。虚拟主机是共享相同的身份认证和加密环境的独立服务器域。每个vhost本质上就是一个mini版的RabbitMQ服务器，拥有自己的队列、交换器、绑定和权限机制。vhost 是AMQP 概念的基础，必须在连接时指定，RabbitMQ默认的vhost是/。
+
+* **Broker**
+
+	消息队列服务器的实体。
+
+![image-20200323110146793](img/rabbitmq.png)
+
+
+
+### 7.1.2 RabbitMQ运行机制
+
+AMQP中消息的路由过程和Java开发者熟悉的JMS存在一些差别， AMQP中增加了Exchange和Binding的角色。生产者把消息发布到Exchange上，消息最终到达队列并被消费者接收，而Binding决定交换器的消息应该发送到那个队列。
+
+<img src="img/rabbitmqworkflow.png" style="zoom: 67%;" />
+
+### 7.1.3 Exchange Type
+
+* **Direct Exchange**：
+	消息中的路由键（routing key）如果和Binding中的binding key一致，交换器将消息发到对应的队列中。**路由键与队列名<span style="color:red;">完全匹配</span>**，如果一个队列绑定到交换机要求路由键为"dog"，则只转发routing key 标记为"dog"的消息，不会转发"dog.puppy"，也不会转发"dog.guard"等等。**它是完全匹配、单播的模式（点对点模式），路由key一对一匹配队列**。
+
+<img src="img/rabbitmq-exchange-direct.png" style="zoom:67%;" />
+
+* **Fanout Exchange：**
+	每个发到fanout类型交换器的消息都会分到所有绑定的队列上去。fanout交换器不处理路由键，只是简单的将队列绑定到交换器上，**每个发送到交换器的消息都会被转发到与该交换器绑定的所有队列上，只要与队列绑定,队列都能接收到，与路由key无关**。
+
+	很像子网广播，每台子网内的主机都获得了一份复制的消息。fanout类型转发消息是最快的。
+
+	<img src="img/rabbitmq-exchange-fanout.png" alt="" style="zoom:67%;" />
+
+* **Topic Exchange：**
+	topic交换器**通过模式匹配分配消息的路由键属性**，将路由键和某个模式进行匹配，此时队列需要绑定到一个模式上。它将路由键和绑定键的字符串切分成单词，这些单词之间用点隔开。**队列name符合路由key匹配模式都能接收到消息。**
+
+	**通配符：**符号"#“和符号” * "。# 匹配0个或多个单词，* 匹配一个单词。
+
+	<img src="img/rabbitmq-exchange-topic.png" style="zoom:67%;" />
+
+### 7.1.4 具体实现
+
+#### 7.1.4.1 消息提供者
+
+pom.xml引入spring-cloud-starter-stream-rabbit
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-stream-rabbit</artifactId>
+    <version>3.0.3.RELEASE</version>
+</dependency>
+```
+
+application.yml
+
+```yaml
+server:
+  port: 8088
+spring:
+  application:
+    name: cloud-stream-provider
+  cloud:
+    stream:
+      binders:
+        defaultRabbit:
+          type: rabbit
+          environment:
+            spring:
+              rabbitmq:
+                host: localhost
+                port: 5672
+                username: guest
+                password: guest
+      bindings:
+        output:
+          destination: rabbitexchange
+          content-type: application/json
+          binder: defaultRabbit
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8001/eureka
+```
+
+消息发送
+
+```java
+@EnableBinding(Source.class)//消息发送管道
+public class MessageProviderImpl implements MessageProvider {
+    @Resource
+    private MessageChannel output;
+
+    @Override
+    public String send() {
+        String msg = UUID.randomUUID().toString();
+        output.send(MessageBuilder.withPayload(msg).build());
+        System.out.println(msg);
+        return null;
+    }
+}
+```
+
+#### 7.1.4.2 消息消费者
+
+application.yml
+
+```yaml
+server:
+  port: 8081
+spring:
+  application:
+    name: cloud-stream-client8081
+  cloud:
+    stream:
+      binders:
+        defaultRabbit:
+          type: rabbit
+          environment:
+            spring:
+              rabbitmq:
+                host: localhost
+                port: 5672
+                username: guest
+                password: guest
+      bindings:
+        input:
+          destination: rabbitexchange
+          content-type: application/json
+          binder: defaultRabbit
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8001/eureka
+  instance:
+    prefer-ip-address: true
+
+```
+
+接收消息：
+
+```java
+@Component
+@EnableBinding(Sink.class)//接收消息
+public class MessageReveiveController {
+
+    @Value("${server.port}")
+    private String port;
+
+    @StreamListener(Sink.INPUT)
+    public void receiveMsg(Message<?> msg){
+        System.out.println("接收到消息："+msg.getPayload()+"\t port:"+port);
+    }
+}
+```
 
