@@ -1,6 +1,6 @@
 <h1 style="text-align:center;">常用技术</h1>
 
-# 0、Java相关知识
+# 0 Java相关知识
 ## 0.1 JVM
 
 ## 0.2 程序性能优化
@@ -17,12 +17,12 @@
 
 
 
-# 1、登录（SSO）
+# 1 登录（SSO）
 ## 1.1 Shiro
 
 ## 1.2 Spring Security
 
-# 2、前端框架
+# 2 前端框架
 
 ## 2.1 JS框架
 
@@ -34,14 +34,14 @@
 
 * ElementUI
 
-# 3、模板引擎
+# 3 模板引擎
 ## 3.1 Apache Tiles
 
 ## 3.2 Themeleaf
 
 
 
-# 4、Spring框架
+# 4 Spring框架
 ## 4.1 Spring 
 
 ## 4.2 SpringMVC 
@@ -52,10 +52,10 @@
 
 
 
-# 5、持久层
+# 5 持久层
 ## 5.1 Mybatis
 
-# 6、数据库
+# 6 数据库
 ## 6.1 关系型：
 
 * Oracle
@@ -68,19 +68,19 @@
 
 * Redis
 
-# 7、缓存
+# 7 缓存
 * EHCache
 
 * Memcached
 
-# 8、日志管理
+# 8 日志管理
 
-# 9、数据检索
+# 9 数据检索
 ##  9.1 Solr
 
 ##  9.2 Elasticsearch 
 
-# 10、文档编写
+# 10 文档编写
 ## 10.1 任务分配
 
 * Project
@@ -97,12 +97,12 @@
 
 * Typora
 
-# 11、IDE
+# 11 IDE
 * Idea
 
 * Eclipse
 
-# 12、代码管理
+# 12 代码管理
 ## 12.1 版本管理
 
 * SVN
@@ -117,33 +117,33 @@
 
 * sonar
 
-# 14、UI设计软件
+# 14 UI设计软件
 * Mockups
 
 * axure
 
-# 15、系统监控
+# 15 系统监控
 ## 15.1 zabbix
 
 
 
-# 16、持续集成
+# 16 持续集成
 ## 16.1 Jekins
 
-# 17、负载均衡
+# 17 负载均衡
 
 ## 17.1 客户端负载均衡
 
 * ngnix 
 
-# 18、消息处理
+# 18 消息处理
 ## 18.1 RabbitMQ
 
 ## 18.2 Kafka
 
 
 
-# 19、BigData
+# 19 BigData
 ## 19.1 Hadoop 2
 
 ## 19.2 Spark
@@ -154,32 +154,32 @@
 
 
 
-# 20、微服务
+# 20 微服务
 ##  20.1 SpringCloud 
 
 ##  20.2 Dubbo
 
 
 
-# 21、Python
+# 21 Python
 
 
-# 22、Linux
+# 22 Linux
 
 
 
-# 23、工具/软件
-## 23.1、http请求调试
+# 23 工具/软件
+## 23.1 http请求调试
 * Postman
 
 	
 
-# 24、Office在线处理
-## 24.1、openoffice
+# 24 Office在线处理
+## 24.1 openoffice
 
 
 
-# 25、容器技术
+# 25 容器技术
 
 * Docker
 
@@ -187,7 +187,7 @@
 
 	
 
-# 26 、JWT
+# 26  JWT
 
 https://jwt.io/introduction/
 
