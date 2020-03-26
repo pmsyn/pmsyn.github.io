@@ -1529,7 +1529,7 @@ Spring Cloud Sleuth为[Spring Cloud](https://cloud.spring.io/)实现了分布式
 
 在微服务框架中，一个由客户端发起的请求在后端系统中会经过多个不同的的服务节点调用来协同产生最后的请求结果，每一个前段请求都会形成一 条复杂的分布式服务调用链路，链路中的任何一 环出现高延时或错误都会引起起整个请求最后的失败。
 
-SpringCloud Sleuth 负责数据收集，Zipkin负责链路跟踪展现。
+**SpringCloud Sleuth 负责数据收集，Zipkin负责链路跟踪展现**。
 
 术语：
 
@@ -1546,29 +1546,31 @@ SpringCloud Sleuth 负责数据收集，Zipkin负责链路跟踪展现。
 
 ## 8.1 代码实现
 
-引入jar包
+1. 下载zipkin
 
-```xml
-<dependency>
-    <groupId>org.springframework.cloud</groupId>
-    <artifactId>spring-cloud-starter-sleuth</artifactId>
-    <version>2.2.2.RELEASE</version>
-</dependency>
-```
+2. 引入jar包
 
-修改application.yml
+	```xml
+	<dependency>
+	    <groupId>org.springframework.cloud</groupId>
+	    <artifactId>spring-cloud-starter-sleuth</artifactId>
+	    <version>2.2.2.RELEASE</version>
+	</dependency>
+	```
 
-```yaml
-spring: 
-  sleuth:
-    sampler:
-    # 1:全部收集，0：不收集
-      probability: 1
-```
+3. 修改application.yml
 
-消费者请求服务提供者
+	```yaml
+	spring: 
+	  sleuth:
+	    sampler:
+	    # 1:全部收集，0：不收集
+	      probability: 1
+	```
 
-在zipkin中查看请求链路：http://localhost:9411
+4. 消费者请求服务提供者
+
+5. 在zipkin中查看请求链路：http://localhost:9411
 
 # 9. Spring Cloud Alibaba
 
@@ -1608,3 +1610,220 @@ Spring Cloud Alibaba 致力于提供微服务开发的一站式解决方案。�
 **[Alibaba Cloud SMS](https://www.aliyun.com/product/sms)**: 覆盖全球的短信服务，友好、高效、智能的互联化通讯能力，帮助企业迅速搭建客户触达通道。
 
 更多组件请参考 [Roadmap](https://github.com/alibaba/spring-cloud-alibaba/blob/master/Roadmap-zh.md)。
+
+
+
+# 10 Spring Cloud Alibaba-Nacos
+
+官网：https://nacos.io/zh-cn/docs/quick-start.html
+
+管理界面：[http://localhost:8848](http://localhost:8848/) 
+
+在父pom中引入依赖
+
+```xml
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+    <version>${spring.cloud.alibaba.version}</version>
+    <type>pom</type>
+    <scope>import</scope>
+</dependency>
+```
+
+
+
+## 10.1 服务注册与发现
+
+### 10.1.1 服务提供者
+
+pom.xml
+
+```xml
+ <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+```
+
+application.yml
+
+```yaml
+server:
+  port: 9090
+spring:
+  application:
+    name: nacos-provider
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+management:
+  endpoints:
+    web:
+      exposure:
+        include: *
+
+```
+
+主启动类
+
+```java
+@SpringBootApplication
+@EnableDiscoveryClient
+public class NacosProvider9090Application {
+    public static void main(String[] args) {
+        SpringApplication.run(NacosProvider9090Application. class,args);
+    }
+}
+```
+
+### 10.1.2 服务消费者
+
+application.yml
+
+```yaml
+server:
+  port: 80
+spring:
+  application:
+    name: nacos-consumer
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+
+ service:
+  nacos-service: http://nacos-provider
+
+```
+
+访问服务提供者：
+
+```java
+@RestController
+public class EchoController {
+    @Resource
+    RestTemplate restTemplate;
+    @Value("${ service.nacos-service}")
+    private String SERVICE_URL;
+
+    @GetMapping("/echo/{id}")
+    public String echo(@PathVariable String id){
+        return restTemplate.getForObject(SERVICE_URL+"/echo/"+id,String.class);
+    }
+}
+```
+
+## 10.2 配置中心
+
+### 10.2.1 配置
+
+1. pom.xml添加依赖
+
+```xml
+<dependency>
+    <groupId>com.alibaba.cloud</groupId>
+    <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+</dependency>
+```
+
+2. 新建bootstrap.yml
+
+```yaml
+server:
+  port: 3377
+spring:
+  application:
+    name: nacos-config-center
+  cloud:
+    nacos:
+      discovery:
+        #        nacos作为注册中心
+        server-addr: localhost:8848
+      config:
+        #     nacos作为配置中心
+        server-addr: localhost:8848
+#        指定yaml格式配置
+        file-extension: yaml
+
+```
+
+说明：之所以需要配置 `spring.application.name` ，是因为它是构成 Nacos 配置管理 `dataId`字段的一部分。
+
+在 Nacos Spring Cloud 中，`dataId` 的完整格式如下：
+
+```plain
+${prefix}-${spring.profile.active}.${file-extension}
+```
+
+- `prefix` 默认为 `spring.application.name` 的值，也可以通过配置项 `spring.cloud.nacos.config.prefix`来配置。
+- `spring.profile.active` 即为当前环境对应的 profile，详情可以参考 [Spring Boot文档](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-profiles.html#boot-features-profiles)。 **注意：当 `spring.profile.active` 为空时，对应的连接符 `-` 也将不存在，dataId 的拼接格式变成 `${prefix}.${file-extension}`**
+- `file-exetension` 为配置内容的数据格式，可以通过配置项 `spring.cloud.nacos.config.file-extension` 来配置。目前只支持 `properties` 和 `yaml` 类型。
+
+3. 在Nacos管理界面中配置dataId
+
+4. 通过 Spring Cloud 原生注解 `@RefreshScope` 实现配置自动更新：
+
+  ```java
+  @RestController
+  @RequestMapping("/config")
+  @RefreshScope
+  public class ConfigController {
+  
+      @Value("${useLocalCache:false}")
+      private boolean useLocalCache;
+  
+      @RequestMapping("/get")
+      public boolean get() {
+          return useLocalCache;
+      }
+  }
+  ```
+
+
+### 10.2.2 参数 
+
+* **Namespaces**
+
+	> 命名空间用于隔离不同租户的配置。跨不同名称空间的组和数据ID可以相同。命名空间的典型场景是隔离不同环境的配置，例如，开发/测试环境与生产环境（配置和服务等）之间的隔离。
+
+	如果未指定名称空间，则`${spring.cloud.nacos.config.namespace}`使用 Nacos 的“public”名称空间。
+
+	此配置必须和bootstrap.properties文件中`spring.cloud.nacos.config.namespace` 中的值相同。
+
+	
+
+* **Groups**
+
+	`{spring.cloud.nacos.config.group}`未定义配置时，默认情况下使用DEFAULT_GROUP 。如果需要定义自己的组，则可以在以下属性中进行定义：
+
+	```properties
+	spring.cloud.nacos.config.group = DEVELOP_GROUP
+	```
+
+	此配置必须和bootstrap.properties文件中`spring.cloud.nacos.config.group`值相同。
+
+* **Data Id**
