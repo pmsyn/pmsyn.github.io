@@ -1,8 +1,14 @@
 <h1 style="text-align:center">SpringCloud</h1>
 
+# 目录
 
+[TOC]
 
 ![](img/diagram-microservices-88e01c7d34c688cb49556435c130d352.svg)
+
+
+
+<img src="img/SpringCloudFrame.png"/>
 
 # 1.服务注册与发现
 
@@ -218,11 +224,11 @@ eureka:
 
 ![image-20200312145821493](img/cloud-eureka-client-cluster05.png)
 
-##### 4.2 消费者开启负载均衡（@LoadBalanced）：
+##### 4.2 消费者开启负载均衡：
 
 ```java
 @Configuration
-public class EurekaConfig {
+public class RestTemplateConfig {
     @Bean
     @LoadBalanced
     public RestTemplate restTemplate(){
@@ -515,10 +521,10 @@ CAP:关注粒度是数据，而不是整体。
 
 Spring Cloud Ribbon是基于Netflix Ribbon实现的一套**客户端负载均衡**的工具。
 
-简单的说，Ribbon是Netflix发 布的开源项目，主要功能是提供**客户端的软件负载均衡算法和服务调用**。Ribbon客户端组件提供一系列完善的配置项如连接超时，重试等。简单的说，就是在配置文件中列出Load Balancer (简称LB)后面所有的机器，Ribbon会自动的帮助你基于某种规则(如简单轮询，随机连接等)去连接这些机器。我们很容易使用Ribbon实现自定义的负载均衡算法。
+简单的说，Ribbon是Netflix发 布的开源项目，主要功能是提供**客户端的软件负载均衡算法和服务调用**。Ribbon客户端组件提供一系列完善的配置项如连接超时，重试等。简单的说，就是在配置文件中列出**Load Balancer** （简称LB）后面所有的机器，Ribbon会自动的帮助你基于某种规则(如简单轮询，随机连接等)去连接这些机器。我们很容易使用Ribbon实现自定义的负载均衡算法。
 
 **LB负载均衡(Load Balance)：**简单的说就是将用户的请求平摊的分配到多个服务上,从而达到系统的HA (可用)。
-常见的负载均衡有软件Nginx, LVS,硬件F5等。
+常见的负载均衡有软件Nginx，LVS，硬件F5等。
 
 **Ribbon本地负载均衡客户端VS Nginx服务端负载均衡区别：**
 
@@ -535,11 +541,11 @@ Spring Cloud Ribbon是基于Netflix Ribbon实现的一套**客户端负载均衡
 
 	将负载均衡逻辑集成到consumer，consumer从服务注册中心获知有哪些地址可用，然后自己再从这些地址中选择出一个合适的provider。
 
-**Ribbon就属于进程内LB**,它只是一个类库, **集成于消费方进程**,消费方通过它来获取到服务提供方的地址。
+**Ribbon就属于进程内LB**，它只是一个类库，集成于消费方进程，消费方通过它来获取到服务提供方的地址。
 
 **Ribbon:负载均衡+RestTemplate调用**
 
-Ribbon在I作时分成两步
+Ribbon调用流程分成两步
 
 * 第一步先选择EurekaServer ,它优先选择在同一个区域内负载较少的server.
 
@@ -588,7 +594,7 @@ Ribbon在I作时分成两步
 ## 2.2 OpenFeign
 
 Feign是一个**声明式WebService客户端**。 使用Feign能让编写Web Service客户端更加简单。
-它的使用方法是**<span style="color:red">定义一个服务接口然后在上面添加注解</span>**。Feignt也**支持可拔插式的编码器和解码器**。
+它的使用方法是**<span style="color:red">定义一个服务接口然后在上面添加注解</span>**。Feign 也**支持可拔插式的编码器和解码器**。
 
 SpringCloud对Feign进行了封装使其支持了Spring MVC标准注解和HttpMessageConverters。
 
@@ -598,11 +604,9 @@ SpringCloud对Feign进行了封装使其支持了Spring MVC标准注解和HttpMe
 **Feign集成了Ribbon**
 利用Ribbon维护了Payment的服务列表信息，并且通过轮询实现了客户端的负载均衡。与Ribbon不同的是，通过**feign只需要定义服务绑定接口且以声明式的方法**，优雅而简单的实现了服务调用。
 
-
-
 ### 2.2.1 配置
 
-pom.xml
+1. pom.xml
 
 ```xml
 <!--openfeign-->
@@ -619,7 +623,7 @@ pom.xml
 </dependency>
 ```
 
-application.yml
+2. application.yml
 
 ```yaml
 eureka:
@@ -630,7 +634,7 @@ eureka:
       defaultZone: http://eureka-server-8001:8001/eureka/,http://eureka-server-8002:8002/eureka/
 ```
 
-服务接口：绑定接口（@FeignClient）且以声明式的方法(@GetMapping)
+3. 服务接口：绑定接口（@FeignClient）且以声明式的方法(@GetMapping)
 
 ```java
 @Service
@@ -642,7 +646,7 @@ public interface TicketService {
 }
 ```
 
-主启动类（@EnableFeignClients）：
+4. 主启动类（@EnableFeignClients）：
 
 ```java
 @SpringBootApplication
@@ -657,7 +661,7 @@ public class OpenFeignConsumerApplication {
 
 ### 2.2.2 超时控制
 
-yml:
+application.yml:
 
 ```yaml
   client:
@@ -672,7 +676,7 @@ yml:
 
 ## 3.1 Hystrix
 
-Hystrix是一个用于处理分布式系统的**延迟和容错**的开源库, 在分布式系统里,许多依赖不可避免的会调用失败,比如超时、异常等,Hystrix能够保证在一个依赖出问题的情况下， **不会导致整体服务失败，避免级联故障，以提高分布式系统的弹性**。
+Hystrix是一个用于处理分布式系统的**延迟和容错**的开源库, 在分布式系统里,许多依赖不可避免的会调用失败,比如超时、异常等，Hystrix能够保证在一个依赖出问题的情况下， **不会导致整体服务失败，避免级联故障，以提高分布式系统的弹性**。
 "**断路器**”本身是一种开关装置， 当某个服务单元发生故障之后,通过断路器的故障监控(类似熔断保险丝)，**向调用方返回一个符合预期的、可处理的备选响应(FallBack) ，而不是长时间的等待或者抛出调用方无法处理的异常**，这样就保证了服务调用方的线程不会被长时间、不必要地占用，从而避免了故障在分布式系统中的蔓延，乃至雪崩。
 
 * 服务降级
@@ -1523,7 +1527,7 @@ public class MessageReveiveController {
           group: rabbit-client
 ```
 
-# 8 .SpringCloud Sleuth
+# 8.SpringCloud Sleuth
 
 Spring Cloud Sleuth为[Spring Cloud](https://cloud.spring.io/)实现了分布式跟踪解决方案。
 
@@ -1613,7 +1617,7 @@ Spring Cloud Alibaba 致力于提供微服务开发的一站式解决方案。�
 
 
 
-# 10 Spring Cloud Alibaba-Nacos
+# 10.Spring Cloud Alibaba-Nacos
 
 官网：https://nacos.io/zh-cn/docs/quick-start.html
 
@@ -1827,3 +1831,305 @@ ${prefix}-${spring.profile.active}.${file-extension}
 	此配置必须和bootstrap.properties文件中`spring.cloud.nacos.config.group`值相同。
 
 * **Data Id**
+
+### 10.2.3 集群和持久化
+
+#### 3.1 持久化
+
+配置文件写入mysql
+
+将默认derby嵌入式数据库切换到mysql
+
+1. 在MySQL数据库中执行nacos/conf/schema.sql
+2. 配置数据库nacos/conf/application.properties
+
+#### 3.2 集群配置
+
+1. 下载linux版本nacos安装
+
+2. 修改nacos中startup.sh脚本
+
+3. 修改nacos/conf/application.properties数据库配置
+
+	```properties
+	spring.datasourceplatform=mysql
+	db.num=1
+	db.url.o=jdbcmys//127.0.0.1:3306/nacos_config?characterEncoding=utf8&connectTimeout=1000&socketTimeout= 30008autoReconnect=true
+	db.user=root
+	db.password= 123456
+	
+	```
+
+4. 修改conf/cluster.conf
+
+	hostname -i 中的ip
+
+	```properties
+	192.168.0.100:8848
+	192.168.0.100:8858
+	192.168.0.100:8868
+	```
+
+	
+
+5. 编辑startup.sh脚本
+
+	传递不同的端口号启动不同的nacos实例
+
+	将默认配置
+
+	```powershell
+	while getopts ":m:f:s:" opt
+	do
+	    case $opt in
+	        m)
+	            MODE=$OPTARG;;
+	        f)
+	            FUNCTION_MODE=$OPTARG;;
+	        s)
+	            SERVER=$OPTARG;;
+	        ?)
+	        echo "Unknown parameter"
+	        exit 1;;
+	    esac
+	done
+	
+	nohup $JAVA ${JAVA_OPT} nacos.nacos >> ${BASE_DIR}/logs/start.out 2>&1 &
+	
+	```
+
+	修改为：
+
+	```powershell
+	while getopts ":m:f:s:p:" opt #P:
+	do
+	    case $opt in
+	        m)
+	            MODE=$OPTARG;;
+	        f)
+	            FUNCTION_MODE=$OPTARG;;
+	        s)
+	            SERVER=$OPTARG;;
+			p)#端口
+				PORT=$OPTARG;;#端口
+	        ?)
+	        echo "Unknown parameter"
+	        exit 1;;
+	    esac
+	done
+	
+	nohup $JAVA -Dserver.port=${PORT} ${JAVA_OPT} nacos.nacos >> ${BASE_DIR}/logs/start.out 2>&1 &
+	
+	```
+
+6. 修改Ngnix的配置作为负载均衡
+
+	ngnix/ngnix.conf
+
+	修改ngnix监听端口、代理和集群服务
+
+	```
+	upstream cluster{
+		server 127.0.0.1:8848
+		server 127.0.0.1:8858
+		server 127.0.0.1:8868
+	
+	}
+	server{
+		listen=9999
+	}
+	location{
+		proxy_pass http://cluster
+	}
+	```
+
+7. 启动nacos集群和ngnix
+
+8. 通过ngnix访问nacos 
+
+	http://localhost:9999/nacos
+
+# 11. Spring Cloud Alibaba-Sentinel
+
+https://github.com/alibaba/Sentinel/wiki/
+
+Sentinel 以流量为切入点，从流量控制、熔断降级、系统负载保护等多个维度保护服务的稳定性。
+
+Sentinel 具有以下特征:
+
+- **丰富的应用场景**：Sentinel 承接了阿里巴巴近 10 年的双十一大促流量的核心场景，例如秒杀（即突发流量控制在系统容量可以承受的范围）、消息削峰填谷、集群流量控制、实时熔断下游不可用应用等。
+- **完备的实时监控**：Sentinel 同时提供实时的监控功能。您可以在控制台中看到接入应用的单台机器秒级数据，甚至 500 台以下规模的集群的汇总运行情况。
+- **广泛的开源生态**：Sentinel 提供开箱即用的与其它开源框架/库的整合模块，例如与 Spring Cloud、Dubbo、gRPC 的整合。您只需要引入相应的依赖并进行简单的配置即可快速地接入 Sentinel。
+- **完善的 SPI 扩展点**：Sentinel 提供简单易用、完善的 SPI 扩展接口。您可以通过实现扩展接口来快速地定制逻辑。例如定制规则管理、适配动态数据源等。
+
+Sentinel 分为两个部分:
+
+- 核心库（Java 客户端）不依赖任何框架/库，能够运行于所有 Java 运行时环境，同时对 Dubbo / Spring Cloud 等框架也有较好的支持。
+- 控制台（Dashboard）基于 Spring Boot 开发，打包后可以直接运行，不需要额外的 Tomcat 等应用容器。
+
+## 11.1 流量控制
+
+https://github.com/alibaba/Sentinel/wiki/%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6
+
+**流量控制**（flow control），其原理是监控应用流量的 QPS 或并发线程数等指标，当达到指定的阈值时对流量进行控制，以避免被瞬时的流量高峰冲垮，从而保障应用的高可用性。
+
+`FlowSlot` 会根据预设的规则，结合前面 `NodeSelectorSlot`、`ClusterNodeBuilderSlot`、`StatisticSlot` 统计出来的实时信息进行流量控制。
+
+限流的直接表现是在执行 `Entry nodeA = SphU.entry(resourceName)` 的时候抛出 `FlowException` 异常。`FlowException` 是 `BlockException` 的子类，您可以捕捉 `BlockException` 来自定义被限流之后的处理逻辑。
+
+同一个资源可以创建多条限流规则。`FlowSlot` 会对该资源的所有限流规则依次遍历，直到有规则触发限流或者所有规则遍历完毕。
+
+一条限流规则主要由下面几个因素组成，我们可以组合这些元素来实现不同的限流效果：
+
+- `resource`：资源名，即限流规则的作用对象
+- `count`: 限流阈值
+- `grade`: 限流阈值类型（QPS 或并发线程数）
+- `limitApp`: 流控针对的调用来源，若为 `default` 则不区分调用来源
+- `strategy`: 调用关系限流策略
+- `controlBehavior`: 流量控制效果（直接拒绝、Warm Up、匀速排队）
+
+### 11.1.1 基于QPS/并发数的流量控制
+
+流量控制主要有两种统计类型，一种是统计并发线程数，另外一种则是统计 QPS。类型由 `FlowRule` 的 `grade` 字段来定义。其中，0 代表根据并发数量来限流，1 代表根据 QPS 来进行流量控制。其中线程数、QPS 值，都是由 `StatisticSlot` 实时统计获取的。
+
+<img src="img/sentinel-qps.png" alt="image-20200328100953182" style="zoom: 80%;" />
+
+#### 1.1 QPS 流量控制
+
+当 QPS 超过某个阈值的时候，则采取措施进行流量控制。流量控制的效果包括以下几种：**直接拒绝**、**Warm Up**、**匀速排队**。对应 `FlowRule` 中的 `controlBehavior` 字段。
+
+#### 1.2  并发线程数流量控制
+
+并发线程数限流用于保护业务线程数不被耗尽。例如，当应用所依赖的下游应用由于某种原因导致服务不稳定、响应延迟增加，对于调用者来说，意味着吞吐量下降和更多的线程数占用，极端情况下甚至导致线程池耗尽。为应对太多线程占用的情况，业内有使用隔离的方案，比如通过不同业务逻辑使用不同线程池来隔离业务自身之间的资源争抢（线程池隔离）。这种隔离方案虽然隔离性比较好，但是代价就是线程数目太多，线程上下文切换的 overhead 比较大，特别是对低延时的调用有比较大的影响。Sentinel 并发线程数限流不负责创建和管理线程池，而是简单统计当前请求上下文的线程数目，如果超出阈值，新的请求会被立即拒绝，效果类似于信号量隔离。
+
+### 11.1.2 基于调用关系的流量控制
+
+调用关系包括调用方、被调用方；一个方法又可能会调用其它方法，形成一个调用链路的层次关系。Sentinel 通过 `NodeSelectorSlot` 建立不同资源间的调用的关系，并且通过 `ClusterNodeBuilderSlot` 记录每个资源的实时统计信息。
+
+有了调用链路的统计信息，我们可以衍生出多种流量控制手段。
+
+#### 2.1 根据调用方限流
+
+直接对调用入口限流
+
+#### 2.2 根据调用链路入口限流：链路限流
+
+`NodeSelectorSlot` 中记录了资源之间的调用链路，这些资源通过调用关系，相互之间构成一棵调用树。这棵树的根节点是一个名字为 `machine-root` 的虚拟节点，调用链的入口都是这个虚节点的子节点。
+
+一棵典型的调用树如下图所示：
+
+```
+     	          machine-root
+                    /       \
+                   /         \
+             Entrance1     Entrance2
+                /             \
+               /               \
+      DefaultNode(nodeA)   DefaultNode(nodeA)
+```
+
+上图中来自入口 `Entrance1` 和 `Entrance2` 的请求都调用到了资源 `NodeA`，Sentinel 允许只根据某个入口的统计信息对资源限流。比如我们可以设置 `FlowRule.strategy` 为 `RuleConstant.CHAIN`，同时设置 `FlowRule.ref_identity` 为 `Entrance1` 来表示只有从入口 `Entrance1` 的调用才会记录到 `NodeA` 的限流统计当中，而不关心经 `Entrance2` 到来的调用。
+
+#### 2.3 具有关系的资源流量控制：关联流量控制
+
+getb的请求数超过阈值时，对geta访问进行限流
+
+<img src="img/qpsrelation.png" alt="image-20200328104636150" style="zoom:80%;" />
+
+## 11.2 熔断降级
+
+Sentinel **熔断降级**会在调用链路中某个资源出现不稳定状态时（例如调用超时或异常比例升高），对这个资源的调用进行限制，让请求快速失败，避免影响到其它的资源而导致级联错误。当资源被降级后，在接下来的降级时间窗口之内，对该资源的调用都自动熔断（默认行为是抛出 `DegradeException`）。
+
+### 11.2.1 降级策略
+
+我们通常用以下几种方式来衡量资源是否处于稳定的状态：
+
+- **平均响应时间** (`DEGRADE_GRADE_RT`)：<span style="color:red;">**当 1s 内持续进入 5 个请求，对应时刻的平均响应时间（秒级）均超过阈值**</span>（`count`，以 ms 为单位），那么在接下的时间窗口（`DegradeRule` 中的 `timeWindow`，以 s 为单位）之内，对这个方法的调用都会自动地熔断（抛出 `DegradeException`）。注意 Sentinel 默认统计的 RT 上限是 4900 ms，**超出此阈值的都会算作 4900 ms**，若需要变更此上限可以通过启动配置项 `-Dcsp.sentinel.statistic.max.rt=xxx` 来配置。
+
+	每秒请求在设定相应时间内未完成时，在窗口期内服务不可用
+
+	
+
+- **异常比例** (`DEGRADE_GRADE_EXCEPTION_RATIO`)：<span style="color:red;">***当资源的每秒请求量 >= 5，并且每秒异常总数占通过量的比值超过阈值**</span>（`DegradeRule` 中的 `count`）之后，资源进入降级状态，即在接下的时间窗口（`DegradeRule` 中的 `timeWindow`，以 s 为单位）之内，对这个方法的调用都会自动地返回。异常比率的阈值范围是 `[0.0, 1.0]`，代表 0% - 100%。
+
+- **异常数** (`DEGRADE_GRADE_EXCEPTION_COUNT`)：**<span style="color:red;">当资源近 1 分钟的异常数目超过阈值之后会进行熔断</span>**<span>。注意由于统计时间窗口是分钟级别的，若 `timeWindow` 小于 60s，则结束熔断状态后仍可能再进入熔断状态。
+
+## 11.3 热点参数限流
+
+何为热点？热点即经常访问的数据。很多时候我们希望统计某个热点数据中访问频次最高的 Top K 数据，并对其访问进行限制。比如：
+
+- 商品 ID 为参数，统计一段时间内最常购买的商品 ID 并进行限制
+- 用户 ID 为参数，针对一段时间内频繁访问的用户 ID 进行限制
+
+热点参数限流会统计传入参数中的热点参数，并根据配置的限流阈值与模式，对包含热点参数的资源调用进行限流。热点参数限流可以看做是一种特殊的流量控制，仅对包含热点参数的资源调用生效。
+
+Sentinel 利用 LRU 策略统计最近最常访问的热点参数，结合令牌桶算法来进行参数级别的流控。热点参数限流支持集群模式。
+
+
+
+```java
+@SentinelResource(value="method",blockHandler="exceptionMethod")//value:Sentinel resource,blockHandler:异常处理方法
+```
+
+自定义全局异常处理类
+
+```java
+public class BlockExceptionHandler {
+    public static String blockException(BlockException ex){
+        return "超过限流";
+    }
+}
+```
+
+使用：
+
+```java
+    @RequestMapping("/geta")
+    @SentinelResource(value="geta",blockHandlerClass = BlockExceptionHandler.class,blockHandler = "blockException")
+    public String geta(){
+        return "geta";
+    }
+```
+
+## 11.4 服务降级
+
+```java
+    @SentinelResource(value="geta",fallback = "fallbackMethod")
+    public String geta(){
+        return "geta";
+    }
+```
+
+
+
+## 11.5 持久化
+
+```yaml
+spring:
+  application:
+    name: sentinel-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+    sentinel:
+      transport:
+        port: 8719
+        dashboard: localhost:8080
+      datasource:
+        dsl:
+          nacos:
+            dataId: sentinel-service-dev
+            groupId: DEFAULT_GROUP
+            server-addr: localhost:8848
+            data-type: json
+            rule_type: flow
+```
+
+# 12 SpringCloud Seata
+
+https://seata.io/zh-cn/docs/overview/what-is-seata.html
+
+Seata 是一款开源的分布式事务解决方案，致力于提供高性能和简单易用的分布式事务服务。Seata 将为用户提供了 AT、TCC、SAGA 和 XA 事务模式，为用户打造一站式的分布式解决方案。
+
+![img](img/seata.png)
