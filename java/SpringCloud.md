@@ -2132,4 +2132,109 @@ https://seata.io/zh-cn/docs/overview/what-is-seata.html
 
 Seata 是一款开源的分布式事务解决方案，致力于提供高性能和简单易用的分布式事务服务。Seata 将为用户提供了 AT、TCC、SAGA 和 XA 事务模式，为用户打造一站式的分布式解决方案。
 
-![img](img/seata.png)
+<img src="img/seata.png" alt="img" style="zoom:80%;" />
+
+## 12.1 Seata术语
+
+#### TC - 事务协调者
+
+维护全局和分支事务的状态，驱动全局事务提交或回滚。
+
+#### TM - 事务管理器
+
+定义全局事务的范围：开始全局事务、提交或回滚全局事务。
+
+#### RM - 资源管理器
+
+管理分支事务处理的资源，与TC交谈以注册分支事务和报告分支事务的状态，并驱动分支事务提交或回滚。
+
+## 12.2 安装配置
+
+1. 修改file.conf 中service vgroupMapping.my_test_tx_group 数据存储store为db和db连接信息
+
+	```conf
+	service{
+		  vgroupMapping.my_test_tx_group = "tx_group"
+	}
+	store {
+	  ## store mode: file、db
+	  mode = "db"
+	}
+	  db {
+	  #连接信息
+	  }
+	```
+
+	
+
+2. 修改registry.conf中注册类型为nacos
+
+	```conf
+	registry {
+	  # file 、nacos 、eureka、redis、zk、consul、etcd3、sofa
+	  type = "nacos"
+	
+	  nacos {
+	    serverAddr = "localhost:8848"
+	    namespace = ""
+	    cluster = "default"
+	  }
+	}  
+	```
+
+3. 启动nacos和seata
+
+4. 复制file.conf和registry.conf到项目resource下
+
+5. 配置application.yml
+
+	```yaml
+	server:
+	  port: 8093
+	spring:
+	  application:
+	    name: seata-account
+	  cloud:
+	    nacos:
+	      discovery:
+	        server-addr: localhost:8488
+	    alibaba:
+	      seata:
+	        tx-service-group: tx_group
+	  datasource:
+	    url: jdbc:oracle:thin:@localhost:1521:orcl
+	    driver-class-name: oracle.jdbc.driver.OracleDriver
+	    username: account
+	    password: account
+	```
+
+6. 添加注解 @GlobalTransactional
+
+## 12.3 执行流程
+
+1. TM开启分布式事务(TM向TC注册全局事务记录) ;
+
+2. 按业务场景，编排数据库、服务等事务内资源(RM向TC汇报资源准备状态) ;
+
+3. TM结束分布式事务，事务一阶段结束(TM通知TC提交/回滚分布式事务) ;
+
+4. TC汇总事务信息，决定分布式事务是提交还是回滚i心
+
+5. TC通知所有RM提交/回滚资源，事务二阶段结束。
+
+在**一阶段**, Seata 会拦截“业务SQL" ,
+
+1. 解析SQL语义，找到“业务SQL"要更新的业务数据，在业务数据被更新前，将其保存成"before image
+
+2. 执行“业务SQL" 更新业务数据，在业务数据更新之后,
+
+3. 其保存成"after image" ，最后生成行锁。
+
+以上操作全部在一个数据库 事务内完成，这样保证了-阶段操作的原子性。
+
+![image-20200409163617478](img/image-20200409163617478.png)
+
+**二阶段**如是顺利提交的话，
+因为“业务SQL"在-阶段已经提交至数据库，所以Seata框架只需将一阶段保存的快照数据行锁删掉,完成数据清理即可。
+
+![image-20200409163735711](img/image-20200409163735711.png)
