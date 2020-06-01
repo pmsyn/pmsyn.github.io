@@ -62,11 +62,14 @@
 
 * MySQL
 
-### 6.2 非关系型：
+## 6.2 非关系型：
 
-* MongoDB
+* MongoDB 可视化工具[robomongo](https://robomongo.org/)
+* Redis  redis可视化工具 [RedisDesktop](https://redisdesktop.com/)
 
-* Redis
+## 6.3 数据库设计工具
+
+* [PowerDesigner](http://powerdesigner.de/)
 
 # 7 缓存
 * EHCache
@@ -88,12 +91,15 @@
 ## 10.2 流程图
 
 * Viso
+* [diagrams.net](ps://www.diagrams.net/)
+* [processon](https://www.processon.com/)
 
 ## 10.3 思维导图
 
 * Xmind
+* [mindmaster](https://www.edrawsoft.cn/mindmaster/)
 
-## 10.4 markdown
+## 10.4 Markdown
 
 * Typora
 
@@ -112,6 +118,7 @@
 ## 12.2 jar包管理
 
 * maven
+* gradle
 
 ## 12.3 代码质量管理
 
@@ -120,8 +127,8 @@
 # 14 UI设计软件
 * Mockups
 * axure
-* https://www.diagrams.net/
-* https://www.processon.com/
+
+	
 
 # 15 系统监控
 ## 15.1 zabbix
@@ -131,11 +138,15 @@
 # 16 持续集成
 ## 16.1 Jekins
 
+
+
 # 17 负载均衡
 
 ## 17.1 客户端负载均衡
 
 * ngnix 
+
+	
 
 # 18 消息处理
 ## 18.1 RabbitMQ
