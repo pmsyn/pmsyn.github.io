@@ -2064,17 +2064,113 @@ public void send() throws Exception {
 }
 ```
 
+## 26.动态代理
+
+### 26.1 jdk代理
+
+* 代理对象
+
+	```java
+	public class DataServiceImpl implements DataService {
+	
+		public String name;
+		public DataServiceImpl(String name) {
+			this.name = name;
+		}
+		
+		@Override
+		public void say() {
+			System.out.println("调用成功"+name);
+			
+		}
+	
+	}
+	```
+
+	
+
+* 代理类
+
+	```java
+	public class DataServiceHandler  implements InvocationHandler  {
+	
+		private Object proxyObject;
+		public DataServiceHandler(Object proxyObject) {
+			this.proxyObject =proxyObject;
+		}
+	    /**
+	    * method 被调用方法
+	    * args 方法参数
+	    **/
+		@Override
+		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+			Object invoke = method.invoke(proxyObject, args);
+			return invoke;
+		}
+	
+	}
+	```
+
+	
+
+* 调用
+
+	```java
+	DataService service = new DataServiceImpl("NAME");
+	DataServiceHandler handler = new DataServiceHandler(service);
+	
+	DataService proxyDervice = (DataService) Proxy.newProxyInstance(handler.getClass().getClassLoader(),                    service.getClass().getInterfaces(), handler);
+	proxyDervice.say();
+	
+	```
+
+### 26.2 cglib
+
+* 代理类
+
+	```java
+	public class CGlibHandler implements MethodInterceptor{
+	
+		@Override
+		public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
+			Object ojb = proxy.invokeSuper(obj, args);
+			return ojb;
+		}
+	
+	}
+	```
+
+	
+
+* 调用
+
+	```java
+	Enhancer enhancer = new Enhancer();
+	enhancer.setSuperclass(DataServiceImpl.class);
+	enhancer.setCallback(new CGlibHandler());
+	DataServiceImpl dservice = (DataServiceImpl) enhancer.create(new Class[] {String.class}, new String[] {"name"});//构造参数
+	dservice.say();
+	```
+
+输出：
+
+```txt
+调用成功NAME
+调用成功name
+
+```
+
+### 26.3 区别
+
+1. JDK 动态代理通过反射来接收被代理的类，并且要求被代理的类必须实现一个接口。
+	JDK 动态代理的核心是InvocationHandler 接口和Proxy 类。
+2. CGLIB（Code Generation Library），是一个代码生成的类库，可以在运行时动态
+	的生成某个类的子类，注意，CGLIB 是通过继承的方式做的动态代理，因此如果某个类被
+	标记为final，那么它是无法使用CGLIB 做动态代理的。
+
 
 
 学习Java EE规范，推荐看JBoss源码；学习类加载器知识，推荐看OSGi源码
-
-
-
-
-
-
-
-
 
 
 
