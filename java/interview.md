@@ -82,7 +82,7 @@ CAS 的全称为 CompareAndSwap， **它是一条 CPU 并发原语**。
 它的功能是判断内存某个位置的值是否为预期值，如果是则更改为新的值，这个过程是原子的。  
 CAS 并发原语体现在JAVA语言中就是 sun.misc.Unsafe 类中的各个方法。调用 UnSafe 类中的 CAS 方法，JVM 会帮我们实现出 CAS 汇编指令。这是一种完全依赖于硬件的功能，通过它实现了原子操作。再次强调，由于 CAS 是一种系统原语，原语属于操作系统用语范畴，是由若干条指令组成的，用于完成某个功能的一个过程，**并且原语的执行必须是连续的，在执行过程中不允许被中断，也就是说 CAS 是一条 CPU 的原子指令，不会造成所谓的数据不一致问题。**
 
-## 4.1 自旋锁
+### 4.1 自旋锁
 
 Unsafe类
 
@@ -165,7 +165,7 @@ ReentrantLock **默认：NonfairSync（非公平锁）**，传入true，Reentran
 非公平锁比较粗鲁，上来就直接尝试占有锁，如果尝试失败，就再采用类似公平锁那种方式。
 
 ### 6.2可重入锁（递归锁）：synchronized、ReentrantLock
-线程可以进入任何一个他已经拥有的锁所同步着的代码块。
+线程可以多次获得自己拥有的。
 
 ```java
 public synchronized void a () {
@@ -212,7 +212,28 @@ ReentrantReadWriteLock 其读锁是共享锁，其写锁是独占锁。
 	lock.unlock();
 	```
 
-### 7. 闭锁 CountDownLatch
+### 6.6 LockSupport
+
+线程等待唤醒机制（wait/notify）加强版（park/unpark）
+
+区别：
+
+1.  Object.wait()、 Object.notify() 区别：wait/notiry 必须使用 synchronized 关键字;先阻塞在唤醒。
+2. Condition.await()、Condition.singal() 必须和 Lock 一起使用;先阻塞在唤醒。
+3. LockSupport park/unpark单纯的阻塞线程不需要锁。阻塞和唤醒无优先顺序。
+
+凭证最多只能是1。
+
+为何可以先唤醒再阻塞：因为unpark获得一个凭证，之后调用park就可以名正言顺消费，故不会阻塞。
+
+uppark凭证加1，park减1。连续调用多次unpark和调用一次一样。
+
+### 6.7 AQS
+
+
+
+## 7. 闭锁 CountDownLatch
+
 - CountDownLatch一个正数计数器，countDown 方法对**计数器做减操作**，await方法等待计数器达到0。所有 await 的线程都会阻塞直到计数器为 0 或者等待线程中断或者超时。
 
 ``` java
