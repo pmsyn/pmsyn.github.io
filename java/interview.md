@@ -1,6 +1,4 @@
----
-typorarooturl: img
----
+# 目录
 
 [TOC]
 
@@ -241,7 +239,7 @@ CountDownLatch latch = new CountDownLatch(5);
 try {
     //执行线程操作
     for(int i =0;i<6;i++) {
-        new Thread(() >{
+        new Thread(() ->{
             latch.countDown();
         }，"线程"+i).start();				
     }
@@ -263,21 +261,21 @@ try {
 2. 闭锁用于等待事件，而栅栏用于等待其他线程
 
 ```java
-CyclicBarrier cyclicBarrier = new CyclicBarrier(8， () > {
-    System.out.println("线程执行结束");
-});
+CyclicBarrier cyclicBarrier = new CyclicBarrier(8, () -> {
+            System.out.println("线程执行结束");
+        });
 
-for(int i=0;i<8;i++) {
-    new Thread(() >{
-        System.out.println(Thread.currentThread().getName());
-        try {
-            //线程阻塞，直到所有线程执行完成
-            cyclicBarrier.await();
-        } catch (Exception e) {
-            e.printStackTrace();
+        for(int i=0;i<8;i++) {
+            new Thread(() ->{
+                    System.out.println(Thread.currentThread().getName());
+                    try {
+                        //线程阻塞，直到所有线程执行完成
+                        cyclicBarrier.await();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+            }, "第"+i+"个线程").start();
         }
-    }， "第"+i+"个线程");
-}
 ```
 
 **CountDownLatch**和**CyclicBarrier**的比较
@@ -705,6 +703,25 @@ Options:
 
    使用VisualJVM连接远程tomcat 添加远程主机：
 
+插件：
+
+1. **BTrace**动态日志跟踪，调试代码
+
+#### 15.2.7 jps
+
+显示虚拟机进程
+
+主要参数：
+
+1. -q ：只输出LVMID，省略主类名称
+2. -m：输出虚拟机进程启动时传递给主类main()函数的参数
+3. -l：输出主类的全名，如果进程执行的是Jar包，输出Jar路径
+4. -v：输出虚拟机进程启动时JVM参数
+
+#### 15.2.8 HSDIS JIT生成反代码汇编
+
+
+
 
 ### 15.3 垃圾回收算法
 #### 15.3.1 如何判断是否进行垃圾回收
@@ -1022,7 +1039,10 @@ NewRatio值就是设置老年代的占比，剩下的1给新生代
 
 ### 19.1 java.lang.StackOverflowError
 
-管运行 ，递归调用时。
+虚拟机栈和本地方法栈溢出，管运行 ，递归调用时。
+
+1. 如果线程请求的栈深度大于虚拟机所允许的最大深度，将抛出StackOverflowError异常。
+2. 如果虚拟机在扩展栈时无法申请到足够的内存空间，将抛出OutOfMemoryError异常。
 
 ```java
 public static void stackOverflow() {
@@ -1039,7 +1059,7 @@ Exception in thread "main" java.lang.StackOverflowError
 
 
 
-### 19.2 java.lang.OutOfMemoryError  
+### 19.2 java.lang.OutOfMemoryError  Java堆溢出
 
  Java heap space 管存储  ,对象太大
 
