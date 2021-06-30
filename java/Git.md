@@ -323,3 +323,13 @@ https://github.com/nvie/gitflow
 excludesfile=文件路径，文件路径使用“/”
 
 ## 1.5 安装 GitLab
+
+# 2.日常使用问题
+
+## 2.1 git clone 遇到问题：fatal: unable to access 'https://github.comxxxxxxxxxxx': Failed to connect to xxxxxxxxxxxxx
+
+处理方法：将命令行里的http改为git重新执行。
+
+## 2.2 每次提交都需要输入登录账户
+
+解决方法：https://blog.csdn.net/Len_lele/article/details/112645080
