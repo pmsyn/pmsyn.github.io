@@ -43,7 +43,15 @@
 * [Quasar](https://quasar.dev/) 是由社区支持的一个全功能框架，支持多种应用模式，适合构建跨平台应用。
 * [Ant Design Vue](https://www.antdv.com/) 是由 Ant Group 开发的，提供统一且优美的视觉效果。
 * [Naive UI](https://www.naiveui.com/) 是一个轻量级 Vue 组件库，适合现代 Web 应用。
-
+## 2.4 图标库
+*  [material-icons](https://mui.com/material-ui/material-icons/)
+*  [material-icons demo](https://marella.me/material-icons/demo/)
+*  [iconfont](https://www.iconfont.cn/)
+*  [fontawesome](https://fontawesome.com/icons)
+*  [bootstrap-icons](https://icons.bootcss.com/)
+*  [ionicons](https://ionic.io/ionicons)
+*  [material design icons](https://pictogrammers.com/library/mdi/)
+*  
 # 3 模板引擎
 ## 3.1 Apache Tiles
 
