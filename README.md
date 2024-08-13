@@ -34,6 +34,16 @@
 
 * ElementUI
 
+## 2.3 Vue组件库
+* (Vuetify)[https://vuetifyjs.com/] Vuetify 是由社区支持的 Vue 组件库，完整实现了 Material Design。
+* (Daisy UI)[https://daisyui.com/] 是基于 Tailwind CSS 的组件库，适合快速开发。
+* (Headless UI)[https://headlessui.com/] 是由 Tailwind Labs 开发的无样式 Vue 组件库，具有极高的灵活性。
+* (Element Plus)[https://element-plus.org/zh-CN/] 是由 Element 团队开发的 Vue 3 组件库，功能全面且支持国际化。
+* (PrimeVue)[https://primevue.org] 是由 PrimeTek 开发的企业级 Vue 组件库，具有强大的主题和样式定制功能。
+* (Quasar)[https://quasar.dev/] 是由社区支持的一个全功能框架，支持多种应用模式，适合构建跨平台应用。
+* (Ant Design Vue)[https://www.antdv.com/] 是由 Ant Group 开发的，提供统一且优美的视觉效果。
+* (Naive UI)[https://www.naiveui.com/] 是一个轻量级 Vue 组件库，适合现代 Web 应用。
+
 # 3 模板引擎
 ## 3.1 Apache Tiles
 
